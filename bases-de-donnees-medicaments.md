@@ -1,157 +1,214 @@
 # Bases de données de médicaments accessibles gratuitement
 
-**Belgique · Europe · International** — vérification du 19 octobre 2026
+**Belgique · Europe · International** — revue complète du 19 octobre 2026
 
-## Méthode de vérification et légende
+---
 
-L'environnement de vérification n'autorisait pas l'accès HTTP direct à ces sites (proxy réseau). Les URL et conditions ont donc été vérifiées **via un moteur de recherche web** à partir des pages officielles indexées (et, à défaut, de sources secondaires). Avant tout usage automatisé, commercial ou de redistribution, relisez la licence sur le site lui-même.
+## 1. Résumé exécutif pour le médecin belge
+
+### 1.1 Les cinq sources indispensables
+
+| # | Source | À quoi elle sert dans la pratique | Ce qui la rend incontournable |
+|---|---|---|---|
+| 1 | **CBIP / BCFI – Répertoire commenté** ([cbip.be](https://www.cbip.be/fr/)) | Choisir un traitement : 1er choix, posologies, contre-indications, interactions, prix, catégorie de remboursement | Indépendant, adapté au marché belge. En 2026, les rubriques **« Grossesse et allaitement »** ont été entièrement révisées et couvrent désormais tous les médicaments (sauf très spécialisés). Le CBIP héberge aussi le **Formulaire de soins aux personnes âgées**, les **Folia** et le **Guide BAPCOC** (nouvelle version 2026 pour les infections respiratoires) |
+| 2 | **SAM v2** – via votre logiciel de dossier médical | Prescrire électroniquement : produit exact, CNK, remboursement, Chapitre IV, prescription en DCI | **Obligatoire** pour la prescription électronique ambulatoire depuis le 01/01/2020. **Prescription en DCI obligatoire pour certains antibiotiques à partir du 01/04/2027** (mesure fédérale de délivrance à l'unité) |
+| 3 | **AFMPS – Banque de données des médicaments** ([lien](https://banquededonneesmedicaments.afmps-fagg.be/)) | Lire le **RCP et la notice officiels belges**, le matériel **RMA** et les **DHPC** | Le RCP belge est la référence légale de l'autorisation : indications, posologies, mises en garde. C'est la base de votre responsabilité, notamment en prescription hors indication |
+| 4 | **INAMI – Spécialités remboursables** ([lien](https://www.inami.fgov.be/fr/themes/soins-de-sante-cout-et-remboursement/les-prestations-de-sante-que-vous-rembourse-votre-mutualite/medicaments/remboursement-d-un-medicament/specialites-pharmaceutiques-remboursables/specialites-pharmaceutiques-remboursables-listes-et-fichiers-de-reference)) | Vérifier les conditions de remboursement et les critères du Chapitre IV avant de prescrire | Fichiers de référence mensuels (Access et Excel), dernier en date : 01/10/2026 |
+| 5 | **PharmaStatus** (AFMPS) | Savoir si un médicament est en rupture et pour combien de temps, avant de prescrire ou de changer de traitement | Source officielle des indisponibilités. Non exhaustive : peut omettre les ruptures de moins de 14 jours |
+
+### 1.2 Les obligations légales et ce qu'elles impliquent
+
+| Règle | Base | Ce que cela change au quotidien | Source à utiliser |
+|---|---|---|---|
+| Prescription électronique via SAM v2 | INAMI / Conseil de gouvernance SAM (depuis 2020) | Utiliser un logiciel enregistré SAM v2. Au 31/03/2025, les logiciels en règle étaient : Nexuzhealth, Zorgi, HDMP, Healthone, Offimed, Daktari, CareConnect, MediPortal, MediSpring | SAM v2 (via le logiciel) |
+| **DCI obligatoire pour certains antibiotiques** | Mesure fédérale, **01/04/2027** | Mettre à jour son logiciel et s'habituer à prescrire ces antibiotiques en DCI | SAM v2, Guide BAPCOC |
+| Chapitre IV | INAMI | Autorisation préalable du médecin-conseil (via MyCareNet / eAgreement) | Liste INAMI, SAM v2 |
+| Pharmacovigilance | Droit de l'UE et AFMPS | Notifier les effets indésirables, surtout graves ou inattendus, et ceux des médicaments sous **triangle noir ▼**. Il n'est pas nécessaire de prouver le lien de causalité | [notifieruneffetindesirable.be](https://www.notifieruneffetindesirable.be/) |
+| Mesures de minimisation des risques (RMA) | Décisions EMA/PRAC, applicables en Belgique | Remettre les documents imposés pour certains médicaments (valproate, isotrétinoïne, etc.) : carte patient, formulaire d'accord annuel | Base AFMPS (rubrique RMA), EMA |
+| Autorisations centralisées européennes | Règlement (CE) 726/2004 | Pour les biologiques, oncologiques et orphelins, le RCP de référence est celui de l'EMA | [EMA](https://www.ema.europa.eu/en/medicines), [Union Register](https://health.ec.europa.eu/medicinal-products/union-register_en) |
+| Essais cliniques | Règlement (UE) 536/2014 | Pour orienter un patient vers un essai ouvert dans l'UE/EEE | [euclinicaltrials.eu](https://euclinicaltrials.eu/) (CTIS) |
+| Prescription hors indication | Responsabilité du prescripteur, loi relative aux droits du patient | Informer le patient et documenter le dossier. Le remboursement reste lié aux conditions INAMI | RCP AFMPS ou EMA, CBIP, INAMI |
+
+### 1.3 Usages concrets par situation clinique
+
+| Situation | Démarche recommandée |
+|---|---|
+| **Nouvelle prescription** | CBIP (choix) → logiciel SAM v2 (prescription, remboursement) → RCP AFMPS en cas de doute |
+| **Infection** | Guide BAPCOC 2026 (sur cbip.be). Prescription en DCI pour les antibiotiques concernés dès avril 2027 |
+| **Patiente enceinte ou allaitante** | Rubrique « Grossesse et allaitement » du CBIP (révisée en 2026), puis [CRAT](https://www.lecrat.fr/) en second avis (site en maintenance, recherche fonctionnelle) et [LactMed](https://www.ncbi.nlm.nih.gov/books/NBK501922/) pour l'allaitement |
+| **Patient âgé ou polymédiqué** | Formulaire de soins aux personnes âgées du CBIP, CredibleMeds pour le risque d'allongement du QT, [DDInter](https://ddinter2.scbdd.com/) comme complément sur les interactions (outil de recherche, non validé cliniquement) |
+| **Insuffisance rénale** | CBIP (actualité d'octobre 2026 sur le risque de toxicité), puis RCP |
+| **Enfant** | CBIP et RCP belge. [Kinderformularium](https://www.kinderformularium.nl/) (Pays-Bas) en complément, à confronter au RCP belge |
+| **Rupture de stock** | PharmaStatus → alternative via le CBIP. Si aucune alternative : importation par le pharmacien ou programme *medical need* (AFMPS) |
+| **Effet indésirable suspecté** | Notifier via [notifieruneffetindesirable.be](https://www.notifieruneffetindesirable.be/). Consulter les notifications européennes sur [adrreports.eu](https://www.adrreports.eu/) et mondiales sur [VigiAccess](https://www.vigiaccess.org/) |
+| **Patient avec un médicament étranger** | RCP du pays d'origine : [BDPM](https://base-donnees-publique.medicaments.gouv.fr/) (France), [emc](https://www.medicines.org.uk/emc) (Royaume-Uni), [PharmNet.Bund](https://www.pharmnet-bund.de/) (Allemagne), [CIMA](https://cima.aemps.es/cima/publico/home.html) (Espagne). Code ATC via l'[index de l'OMS](https://atcddd.fhi.no/atc_ddd_index/) pour trouver l'équivalent belge |
+| **Mise à jour scientifique** | Folia (CBIP), DHPC et communications de sécurité EMA/PRAC |
+
+### 1.4 À ne pas utiliser comme référence
+
+- **DailyMed, openFDA, Drugs@FDA** : autorisations américaines, avec des indications et posologies qui peuvent différer.
+- **BNF** : non accessible gratuitement hors du Royaume-Uni.
+- **DrugBank, KEGG, SIDER, DDInter** : outils de recherche. SIDER n'est plus mis à jour depuis 2015.
+
+Pour un médecin belge, aucune de ces sources ne remplace le RCP belge ou européen ni le CBIP.
+
+### 1.5 Pour développer un outil (logiciel, aide à la décision)
+
+| Besoin | Source | Conditions vérifiées |
+|---|---|---|
+| Référentiel belge complet | **SAM v2** | « Base de données ouverte » utilisable librement selon le [contrat de licence réutilisateur](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx), gérée par l'AFMPS, le CBIP, l'INAMI et le SPF Économie. Accès par webservices (DICS via l'eHealth Service Bus) ou export depuis le site eSanté |
+| Contenu CBIP structuré | **Base de données DME du CBIP** | SQL et CSV (UTF-8), en français et néerlandais, **gratuite**, publiée chaque mois vers le 18 (dernière : septembre 2026) |
+| Remboursement | **Fichiers de référence INAMI** | Access et Excel mensuels |
+| Interopérabilité internationale | ATC (OMS), RxNorm, IDMP/SPOR (EMA) | Voir les tableaux détaillés ci-dessous |
+
+Un logiciel d'aide à la décision clinique peut relever du **Règlement (UE) 2017/745** sur les dispositifs médicaux : à évaluer avant toute mise sur le marché.
+
+---
+
+## 2. Méthode et légende
+
+Les URL ont été testées **en direct** depuis l'environnement de travail le 19/10/2026, après autorisation des domaines nécessaires. Pour 92 URL :
+- **79** ont répondu HTTP 200 ;
+- les autres étaient protégées contre les robots, redirigées vers un domaine non autorisé ou refusées par le serveur.
+
+Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Quand une page n'était pas lisible automatiquement (protection anti-robot, application JavaScript), je me suis appuyé sur la recherche web de la passe précédente.
 
 | Statut | Signification |
 |---|---|
-| ✅ | URL **et** conditions d'accès confirmées par une page officielle |
-| 🟡 | Partiellement confirmé : URL ou conditions issues de sources tierces, anciennes ou incomplètes |
-| ⚠️ | Non vérifié lors de cette passe |
+| ✅ | Page officielle lue en direct : URL **et** conditions confirmées |
+| 🔒 | Site joignable, mais contenu protégé ou en JavaScript. Conditions confirmées par recherche web |
+| 🟡 | Partiellement confirmé (source tierce ou ancienne, ou point non vérifiable) |
+| ⛔ | Non joignable depuis l'environnement de test (connexion refusée ou coupée) |
 
-### Changements importants par rapport aux idées reçues
+### Changements par rapport à la version précédente
 
-- **BNF (NICE)** : gratuit **uniquement depuis le Royaume-Uni**. Hors UK → MedicinesComplete (payant).
-- **DrugBank** : les releases 2026 sont sous **CC BY-NC 4.0** (non commercial). Le jeu « Open Data » en CC0 n'est pas confirmé pour 2026.
-- **SIDER** : plus maintenu, données de **2015** (v4.1).
-- **PharmNet.Bund (Allemagne)** : recherche **entièrement gratuite depuis février 2025** (avant : partiellement payante).
-- **ATC/DDD (OMS)** : consultation en ligne gratuite, mais fichiers **Excel/XML payants**.
-- **Suisse** : l'information professionnelle est désormais publiée sur **swissmedicinfo-pro.ch**. **swissmedicinfo.ch** reste le site destiné aux patients.
-
----
-
-## 🇧🇪 Belgique
-
-| Base | URL | Contenu | Conditions d'accès | Statut |
-|---|---|---|---|---|
-| **AFMPS – Banque de données des médicaments à usage humain** | https://banquededonneesmedicaments.afmps-fagg.be/ | Médicaments autorisés (humain et vétérinaire), RCP, notices, CNK, mode de délivrance, statut de commercialisation, matériel RMA, DHPC | Gratuit, sans inscription. RCP et notices en libre accès depuis le 11/01/2010 | 🟡 contenu confirmé, URL actuelle non confirmée |
-| **SAM v2 – Source Authentique des Médicaments** (AFMPS, INAMI, eHealth) | [Page INAMI éditeurs de logiciels](https://www.inami.fgov.be/fr/themes/esante/informations-techniques-et-enregistrement-pour-les-fournisseurs-de-logiciels-destines-aux-dispensateurs-de-soins/fournisseurs-de-logiciels-la-source-authentique-des-medicaments-samv2) · [Spécification d'export 3.4.0](https://ehealth.fgov.be/ehealthplatform/file/cc73d96153bbd5448a56f19d925d05b1379c7f21/79b4783a893f05f23ebc42e9d78709872a9dae99/sam-v2-export-3.4.0.pdf) | Référentiel officiel : AMP/VMP, conditionnements (CNK), remboursement, prix, Chapitre IV | « Base de données ouverte » utilisable librement sous [contrat de licence réutilisateur INAMI](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx). Export XML via l'application web eHealth. Obligatoire pour la prescription électronique ambulatoire depuis le 01/01/2020 | 🟡 licence confirmée, procédure d'inscription non détaillée |
-| **CBIP / BCFI – Répertoire commenté des médicaments** | https://www.cbip.be/fr/ · [Téléchargements](https://www.cbip.be/fr/download) | Information indépendante, classement thérapeutique, prix, Folia | Consultation gratuite. Base de données en SQL/CSV publiée à chaque mise à jour mensuelle (vers le 18 du mois) | 🟡 conditions de réutilisation non confirmées |
-| **INAMI – Spécialités pharmaceutiques remboursables** | [Listes et fichiers de référence](https://www.inami.fgov.be/fr/themes/soins-de-sante-cout-et-remboursement/les-prestations-de-sante-que-vous-rembourse-votre-mutualite/medicaments/remboursement-d-un-medicament/specialites-pharmaceutiques-remboursables/specialites-pharmaceutiques-remboursables-listes-et-fichiers-de-reference) · [Description du fichier](https://www.riziv-inami.fgov.be/SiteCollectionDocuments/liste-specialites-pharmaceutiques-remboursables-description-fichier-reference.pdf) | Remboursement, catégories, Chapitre IV, codes ATC et CNK, décisions ministérielles | Gratuit. Moteur de recherche web et fichiers Excel mensuels. Publication officielle au Moniteur belge (la coordination INAMI est officieuse) | ✅ |
-| **PharmaStatus / PharmaStatut** (AFMPS) | [Page AFMPS](https://www.afmps.be/en/human_use/medicines/medicines/information_about_medicines/pharmastatus) | Disponibilité : nouveaux produits, indisponibilités temporaires, arrêts de commercialisation, indisponibilités critiques | Gratuit. Alertes e-mail par médicament. Liste non exhaustive : peut omettre les ruptures de moins de 14 jours | ✅ |
+- **SAM v2** : prescription en DCI obligatoire pour certains antibiotiques au 01/04/2027. Contenu du contrat de licence lu en direct.
+- **CBIP** : base DME gratuite confirmée (mise à jour de septembre 2026). Répertoire révisé tous les deux ans depuis 2026. Rubrique grossesse et allaitement complète.
+- **openFDA** : la page officielle indique que la clé API est « requise ». Les limites sans clé (240 requêtes/min, 1 000/jour par IP) restent publiées, et un appel sans clé a fonctionné.
+- **RxNav** : limite de 20 requêtes/s par IP, portée à 100 avec une clé UTS (licence UMLS gratuite).
+- **WHO ICTRP** : le portail permet le **téléchargement CSV/XML**. Le web service et le crawling sont réservés aux partenaires agréés.
+- **DrugCentral** : nouveau dump au **25/09/2026** (PostgreSQL 16 avec extension RDKit), image Docker disponible.
+- **Thériaque** : **inscription gratuite** confirmée, ouverte aux professionnels de Belgique.
+- **CRAT** : site **en maintenance**, recherche fonctionnelle.
+- **DDInter 2.0** : 302 516 interactions pour **2 290** médicaments approuvés.
+- **API PBS (Australie)** : l'URL de base renvoie 401 sans clé d'abonnement.
 
 ---
 
-## 🇪🇺 Union européenne
+## 3. 🇧🇪 Belgique
 
 | Base | URL | Contenu | Conditions d'accès | Statut |
 |---|---|---|---|---|
-| **EMA – Medicines / Download medicine data** | https://www.ema.europa.eu/en/medicines/download-medicine-data | AMM centralisées, procédures post-autorisation, EPAR, pénuries (depuis le 27/11/2024) | Gratuit. Tableaux téléchargeables mis à jour chaque nuit. Les EPAR complets restent sur les pages individuelles des médicaments | ✅ |
-| **Union Register** (Commission européenne) | https://health.ec.europa.eu/medicinal-products/union-register_en | AMM centralisées (humain, vétérinaire, orphelins), titulaires, ATC, indications, décisions, produits retirés ou refusés | Gratuit. Recherche par nom, DCI ou numéro UE | ✅ |
-| **adrreports.eu** (EudraVigilance) | https://www.adrreports.eu/ | Notifications spontanées d'effets indésirables dans l'EEE | Gratuit, public. Données **agrégées** uniquement : ni cas individuels, ni données d'essais cliniques | ✅ |
-| **CTIS – Clinical Trials Information System** (public) | https://euclinicaltrials.eu/ · [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-development/clinical-trials-human-medicines/clinical-trials-information-system) | Essais cliniques UE/EEE (Règlement 536/2014) depuis le 31/01/2022 | Gratuit, sans connexion | 🟡 domaine public non confirmé |
-| **EU Clinical Trials Register** (historique) | https://www.clinicaltrialsregister.eu/ | Essais relevant de l'ancienne Directive 2001/20/CE | — | ⚠️ |
-| **EMA SPOR (PMS/SMS, IDMP)** | [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-and-development/data-medicines-iso-idmp-standards-overview/substance-product-organisation-and-referential-spor-master-data/substance-and-product-data-management-services) | Référentiels substances, produits, organisations (ISO IDMP) | Principalement destiné aux régulateurs et à l'industrie. Accès public limité | 🟡 |
+| **AFMPS – Banque de données des médicaments à usage humain** | https://banquededonneesmedicaments.afmps-fagg.be/ | Médicaments autorisés (humain et vétérinaire), RCP, notices, CNK, mode de délivrance, statut de commercialisation, RMA, DHPC | Gratuit, sans inscription | 🔒 (application JavaScript ; afmps.be protégé contre les robots) |
+| **SAM v2** – Source Authentique des Médicaments | [Page INAMI](https://www.inami.fgov.be/fr/themes/esante/informations-techniques-et-enregistrement-pour-les-fournisseurs-de-logiciels-destines-aux-dispensateurs-de-soins/fournisseurs-de-logiciels-la-source-authentique-des-medicaments-samv2) · [Spécification d'export](https://ehealth.fgov.be/ehealthplatform/file/cc73d96153bbd5448a56f19d925d05b1379c7f21/79b4783a893f05f23ebc42e9d78709872a9dae99/sam-v2-export-3.4.0.pdf) · [Licence](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx) | Référentiel officiel : AMP/VMP, conditionnements, remboursement, prix, Chapitre IV | Base ouverte sous contrat de licence réutilisateur. Webservices DICS (eHealth) et export eSanté. Documentation sur samportal.be | ✅ |
+| **CBIP / BCFI – Répertoire commenté** | https://www.cbip.be/fr/ · [Téléchargements](https://www.cbip.be/fr/download) | Information indépendante, Folia, Formulaire personnes âgées, Guide BAPCOC | Consultation gratuite. Base DME SQL/CSV gratuite et mensuelle | ✅ |
+| **INAMI – Spécialités remboursables** | [Listes et fichiers](https://www.inami.fgov.be/fr/themes/soins-de-sante-cout-et-remboursement/les-prestations-de-sante-que-vous-rembourse-votre-mutualite/medicaments/remboursement-d-un-medicament/specialites-pharmaceutiques-remboursables/specialites-pharmaceutiques-remboursables-listes-et-fichiers-de-reference) · [Description](https://www.riziv-inami.fgov.be/SiteCollectionDocuments/liste-specialites-pharmaceutiques-remboursables-description-fichier-reference.pdf) | Remboursement, Chapitre IV, ATC, CNK | Gratuit. Fichiers Access et Excel mensuels | ✅ |
+| **PharmaStatus / PharmaStatut** | [Page AFMPS](https://www.afmps.be/en/human_use/medicines/medicines/information_about_medicines/pharmastatus) | Disponibilité, ruptures, arrêts de commercialisation | Gratuit. Alertes e-mail | 🔒 (redirection vers pharmastatut.be, domaine non testé) |
+| **Notification d'effets indésirables** | https://www.notifieruneffetindesirable.be/ | Formulaire officiel pour patients et professionnels | Gratuit | 🔒 (application JavaScript) |
+| **EBMPracticeNet** | https://www.ebmpracticenet.be/ | Guidelines belges et internationales (Duodecim), en français et néerlandais | Gratuit pour les professionnels belges (financement INAMI, sources 2013–2017) | ⛔ (connexion coupée par le serveur) |
+
+---
+
+## 4. 🇪🇺 Union européenne
+
+| Base | URL | Contenu | Conditions d'accès | Statut |
+|---|---|---|---|---|
+| **EMA – Download medicine data** | https://www.ema.europa.eu/en/medicines/download-medicine-data | AMM centralisées, EPAR, PSUSA, DHPC, pénuries, URL des RCP par État membre | Gratuit. Tableaux téléchargeables (fichier des URL de RCP mis à jour le 29/09/2026) | ✅ |
+| **Union Register** (Commission européenne) | https://health.ec.europa.eu/medicinal-products/union-register_en | AMM centralisées, titulaires, ATC, décisions | Gratuit. Recherche par nom, DCI ou numéro UE | ✅ |
+| **adrreports.eu** (EudraVigilance) | https://www.adrreports.eu/ | Notifications spontanées d'effets indésirables dans l'EEE | Gratuit. Données agrégées, actualisées chaque lundi | ✅ |
+| **CTIS** – essais cliniques (public) | https://euclinicaltrials.eu/ · [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-development/clinical-trials-human-medicines/clinical-trials-information-system-ctis) | Essais UE/EEE depuis le 31/01/2022 | Gratuit, sans connexion | ✅ |
+| **EU Clinical Trials Register** (historique) | https://www.clinicaltrialsregister.eu/ | Essais relevant de l'ancienne Directive 2001/20/CE, résultats | Gratuit | ✅ |
+| **EMA SPOR** (PMS/SMS, IDMP) | https://spor.ema.europa.eu/ · [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-and-development/data-medicines-iso-idmp-standards-overview/substance-product-organisation-and-referential-spor-master-data/substance-and-product-data-management-services) | Référentiels substances, produits, organisations | Principalement pour régulateurs et industrie | 🟡 |
+| **European Paediatric Formulary** (EDQM) | [EDQM](https://edqm.eu/en/-/european-paediatric-formulary-online) | Préparations magistrales pédiatriques | Gratuit | ⛔ (redirection vers www.edqm.eu, domaine non autorisé) |
 
 ### Bases nationales européennes
 
 | Pays | Base | URL | Conditions d'accès | Statut |
 |---|---|---|---|---|
-| 🇫🇷 | **BDPM** – Base de données publique des médicaments (ANSM, HAS, UNCAM) | https://base-donnees-publique.medicaments.gouv.fr/ · [Téléchargement](https://base-donnees-publique.medicaments.gouv.fr/telechargement) · [data.gouv.fr](https://www.data.gouv.fr/datasets/base-de-donnees-publique-des-medicaments-defi-idoc-sante) | Téléchargement libre et gratuit, mise à jour mensuelle. Fichiers TXT séparés par des tabulations, sans en-tête. Réutilisation autorisée sans altérer les données, en citant la source et la date (Licence Ouverte). **Pas d'API officielle** | ✅ |
-| 🇫🇷 | **Thériaque** (CNHIM) | https://www.theriaque.org/ | Accès web gratuit. Abonnements hospitaliers, licence éditeurs (API) et OncoThériaque payants. Agréée HAS (2023) | 🟡 obligation d'inscription non confirmée |
-| 🇫🇷 | **CRAT** – grossesse et allaitement | https://www.lecrat.fr/ | Site en accès libre, financement public. Service de conseil réservé aux professionnels de santé | ✅ |
-| 🇪🇸 | **CIMA** (AEMPS) | https://cima.aemps.es/cima/publico/home.html | Gratuit. API REST publique (v1.23 selon des clients tiers) : médicaments, fiches techniques, notices, ruptures | 🟡 documentation officielle de l'API non confirmée |
-| 🇬🇧 | **dm+d** (NHSBSA) | [NHSBSA – release dm+d files](https://www.nhsbsa.nhs.uk/pharmacies-gp-practices-and-appliance-contractors/dictionary-medicines-and-devices-dmd/release-dmd-files) · https://isd.digital.nhs.uk/trud/ | Gratuit via TRUD (compte et acceptation de licence). XML hebdomadaire, mappings BNF/ATC | ✅ |
-| 🇬🇧 | **emc** – electronic medicines compendium (Datapharm) | https://www.medicines.org.uk/emc | RCP, notices et matériel RMA gratuits, sans inscription. Compte optionnel pour les alertes | ✅ |
-| 🇬🇧 | **BNF / BNFc** (NICE) | https://bnf.nice.org.uk/ | ⚠️ **Gratuit seulement depuis le Royaume-Uni** ([NICE](https://www.nice.org.uk/bnf-uk-only)). Ailleurs : MedicinesComplete, payant | ✅ |
-| 🇩🇪 | **PharmNet.Bund / AMIce** (BfArM, PEI, BVL) | https://www.pharmnet-bund.de/ | **Entièrement gratuit depuis février 2025** ([Ärzteblatt](https://www.aerzteblatt.de/nachrichten/157230/BfArM-erweitert-oeffentlichen-Zugang-zu-Arzneimittel-und-Zulassungsdaten)). En allemand uniquement | ✅ |
-| 🇮🇹 | **Banca Dati Farmaci** (AIFA) | https://medicinali.aifa.gov.it/ · [Catalogue open data AIFA](https://www.aifa.gov.it/catalogo-dei-dati-metadati-e-banche-dati) | Gratuit, ouvert à tous. RCP, notices, conditionnements, remboursement. Application mobile disponible | 🟡 URL actuelle non confirmée |
-| 🇳🇱 | **Farmacotherapeutisch Kompas** (Zorginstituut) | https://www.farmacotherapeutischkompas.nl/ | Texte intégral gratuit en ligne et en application | ✅ |
-| 🇳🇱 | **Kinderformularium** – posologies pédiatriques | https://www.kinderformularium.nl/ | Financé par le ministère néerlandais. Utilisé à l'étranger sous licence | 🟡 conditions individuelles non confirmées |
-| 🇳🇱 | **Lareb** – pharmacovigilance | https://www.lareb.nl/ | — | ⚠️ |
-| 🇨🇭 | **Swissmedicinfo** (Refdata / Swissmedic AIPS) | https://www.swissmedicinfo.ch/ (patients) · https://swissmedicinfo-pro.ch/ (professionnels) | Information officielle gratuite (selon le [webinaire Refdata 2025](https://refdata.ch/images/webinar2025/Webinar_AIPS_August_2025_DE.pdf)) | 🟡 |
-| 🇨🇭 | **compendium.ch** | https://compendium.ch/ | — | ⚠️ |
-| 🌍 | **European Paediatric Formulary** (EDQM) | [EDQM](https://edqm.eu/en/-/european-paediatric-formulary-online) | Gratuit en ligne. Préparations magistrales pédiatriques | ✅ |
+| 🇫🇷 | **BDPM** | https://base-donnees-publique.medicaments.gouv.fr/ · [Téléchargement](https://base-donnees-publique.medicaments.gouv.fr/telechargement) | Libre et gratuit, mise à jour mensuelle (dernière : 29/09/2026). Reproduction et redistribution autorisées sans altération, avec mention de la source et de la date | ✅ |
+| 🇫🇷 | **Thériaque** (CNHIM) | https://www.theriaque.org/ | **Inscription gratuite**, ouverte aux professionnels belges. Offres payantes (API, hôpitaux). Base mise à jour le 18/10/2026 | ✅ |
+| 🇫🇷 | **CRAT** – grossesse et allaitement | https://www.lecrat.fr/ | Accès libre. **Site en maintenance**, recherche fonctionnelle | ✅ |
+| 🇫🇷 | Miroir BDPM sur data.gouv.fr | [data.gouv.fr](https://www.data.gouv.fr/datasets/base-de-donnees-publique-des-medicaments-defi-idoc-sante) | Licence Ouverte | ⛔ (connexion coupée) |
+| 🇪🇸 | **CIMA** (AEMPS) | https://cima.aemps.es/cima/publico/home.html · API : `https://cima.aemps.es/cima/rest/` | Gratuit. **API REST sans clé** (testée : JSON renvoyé) | ✅ |
+| 🇬🇧 | **dm+d** (NHSBSA) | [Release dm+d files](https://www.nhsbsa.nhs.uk/pharmacies-gp-practices-and-appliance-contractors/nhs-dictionary-medicines-and-devices-dmd/release-dmd-files) · https://isd.digital.nhs.uk/trud/ | Gratuit via TRUD (compte et licence). Diffusion hebdomadaire (dernière : 19/10/2026) | ✅ |
+| 🇬🇧 | **emc** | https://www.medicines.org.uk/emc | RCP, notices et RMM gratuits. Compte optionnel pour les alertes. Index des médicaments sous triangle noir | ✅ |
+| 🇬🇧 | **BNF / BNFc** (NICE) | https://bnf.nice.org.uk/ | **Réservé aux utilisateurs au Royaume-Uni** ([NICE](https://www.nice.org.uk/bnf-uk-only)). Ailleurs : MedicinesComplete, payant | ✅ (403 confirmé hors UK) |
+| 🇩🇪 | **PharmNet.Bund / AMIce** | https://www.pharmnet-bund.de/ | Partie publique **entièrement gratuite**. Comprend aussi les ruptures (Lieferengpässe) et les essais cliniques | ✅ |
+| 🇮🇹 | **Banca Dati Farmaci** (AIFA) | https://medicinali.aifa.gov.it/ · [Catalogue open data](https://www.aifa.gov.it/catalogo-dei-dati-metadati-e-banche-dati) | Gratuit, ouvert à tous | 🔒 (application JavaScript) |
+| 🇳🇱 | **Farmacotherapeutisch Kompas** | https://www.farmacotherapeutischkompas.nl/ | Gratuit en ligne et en application (Zorginstituut). Textes récemment mis à jour : insuffisance rénale, obésité, pharmacogénétique | ✅ |
+| 🇳🇱 | **Kinderformularium** (NKFK) | https://www.kinderformularium.nl/ | Consultation en ligne. Utilisé à l'étranger sous licence | 🟡 (conditions individuelles non précisées sur la page) |
+| 🇳🇱 | **Lareb** | https://www.lareb.nl/ | Gratuit : effets indésirables, médicaments et grossesse, vaccins | ✅ |
+| 🇨🇭 | **Swissmedicinfo** (Refdata / AIPS) | https://www.swissmedicinfo.ch/ (patients) · https://swissmedicinfo-pro.ch/ (professionnels) | Information officielle gratuite | 🔒 (application JavaScript) |
+| 🇨🇭 | **compendium.ch** (HCI Solutions) | https://compendium.ch/ | Recherche publique. Fonctions avancées (CDS-Check, interactions, eMediplan) avec connexion HIN ou swiss-rx | ✅ |
 
 ---
 
-## 🌍 International
+## 5. 🌍 International
 
-### OMS et registres internationaux
-
-| Base | URL | Conditions d'accès | Statut |
-|---|---|---|---|
-| **WHO ATC/DDD Index 2026** | https://atcddd.fhi.no/atc_ddd_index/ | Recherche en ligne gratuite (3 lettres minimum, pas de noms de marque). Index complet Excel/XML et version papier **payants** | ✅ |
-| **WHO Model List of Essential Medicines** | [OMS – liste 2025](https://www.who.int/publications/i/item/9789240119741) · https://list.essentialmeds.org/ (eEML) | Gratuit. 24e édition (septembre 2025) : 523 médicaments adultes, 374 pour la liste pédiatrique (EMLc, 10e édition) | 🟡 eEML non confirmé |
-| **VigiAccess** (OMS / UMC) | https://www.vigiaccess.org/ | Gratuit, acceptation des conditions d'utilisation. Données agrégées de VigiBase (plus de 110 pays). Pas de cas individuels, pas de calcul d'incidence | ✅ |
-| **WHO ICTRP** | https://trialsearch.who.int/ | Portail de recherche gratuit. Pas d'API publique (service de crawling indisponible) | ✅ |
-| **ClinicalTrials.gov** | https://clinicaltrials.gov/ (API v2 : `/api/v2/studies`) | Gratuit, données du domaine public. API v2 en JSON sans clé | 🟡 API confirmée par des sources tierces |
-
-### États-Unis (FDA / NLM)
+### 5.1 OMS et registres d'essais
 
 | Base | URL | Conditions d'accès | Statut |
 |---|---|---|---|
-| **DailyMed** (NLM) | https://dailymed.nlm.nih.gov/dailymed/ · [Web services](https://dailymed.nlm.nih.gov/dailymed/app-support-web-services.cfm) | Gratuit. API REST versionnée (HTTPS) : SPL par SET ID, NDC, UNII, RxCUI. Téléchargement ZIP/PDF | ✅ |
-| **openFDA** | https://open.fda.gov/ | Gratuit. Clé API gratuite et facultative : avec clé, 240 req/min et 120 000/jour. Sans clé, environ 1 000/jour (limite par minute variable selon les sources) | 🟡 |
-| **Orange Book** | [Data files](https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files) · https://www.accessdata.fda.gov/scripts/cder/ob/ | Gratuit. ZIP mensuel de 3 fichiers TXT séparés par « ~ » (produits, brevets, exclusivités) | ✅ |
-| **Drugs@FDA** | https://www.accessdata.fda.gov/scripts/cder/daf/ | — | ⚠️ |
-| **NDC Directory** | [Page FDA](https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory) | — | ⚠️ |
-| **GSRS / UNII** (FDA, NCATS) | https://gsrs.ncats.nih.gov/ · [Page FDA](https://www.fda.gov/industry/fda-resources-data-standards/fdas-global-substance-registration-system) | Gratuit. Téléchargements publics. UNII libres d'utilisation | ✅ |
-| **RxNorm / RxNav** (NLM) | [RxNorm](https://www.nlm.nih.gov/research/umls/rxnorm/index.html) · [Conditions RxNav](https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html) | API RxNav **sans licence**, attribution demandée (exception : contenu SNOMED CT dans RxClass). Fichiers complets : compte UTS et licence UMLS, gratuits | ✅ |
-| **LiverTox** (NIDDK) | https://www.ncbi.nlm.nih.gov/books/NBK547852/ | Domaine public. Liste maîtresse en Excel | ✅ |
-| **LactMed** (NLM) | https://www.ncbi.nlm.nih.gov/books/NBK501922/ | Gratuit. Téléchargement en masse via le NLM LitArch Open Access Subset | ✅ |
-| **MedlinePlus – Drugs** | https://medlineplus.gov/druginformation.html | — | ⚠️ |
+| **WHO ATC/DDD Index 2026** | https://atcddd.fhi.no/atc_ddd_index/ | Recherche en ligne gratuite (3 lettres minimum, pas de noms de marque). Index complet en Excel/XML **payant**, téléchargeable via un compte sur le portail de commande | ✅ |
+| **WHO eEML** – médicaments essentiels | https://list.essentialmeds.org/ | Gratuit. Export disponible. Liste de 2025 (24e édition) | ✅ |
+| **VigiAccess** (OMS / UMC) | https://www.vigiaccess.org/ | Gratuit, acceptation des conditions d'utilisation. Données agrégées | 🔒 (application JavaScript) |
+| **WHO ICTRP** | https://trialsearch.who.int/ · [Données](https://www.who.int/tools/clinical-trials-registry-platform/data) | Portail gratuit, **téléchargement CSV/XML** des recherches. Web service et crawling réservés aux partenaires agréés | ✅ |
+| **ClinicalTrials.gov** | https://clinicaltrials.gov/ · API v2 : `https://clinicaltrials.gov/api/v2/studies` | Gratuit. **API v2 sans clé** (testée) | ✅ |
 
-### Autres agences nationales
+### 5.2 États-Unis (FDA / NLM)
 
 | Base | URL | Conditions d'accès | Statut |
 |---|---|---|---|
-| 🇨🇦 **Health Canada – Drug Product Database (DPD)** | https://health-products.canada.ca/dpd-bdpp/ · [Extraits](https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/drug-product-database/extracts.html) | Gratuit. Extraits TXT/CSV (environ 116 Mo décompressés, mis à jour en 2026). API documentée sur health-products.canada.ca | ✅ extraits · 🟡 API |
-| 🇦🇺 **TGA – ARTG** | https://www.tga.gov.au/resources/artg | Recherche gratuite : résumés publics, PI, CMI (pas tous disponibles). Export en masse non confirmé | ✅ |
-| 🇦🇺 **PBS – API de données** | https://data-api.health.gov.au/pbs/api/v3/ · [Portail développeur](https://data-api-portal.health.gov.au/) | API publique **sans inscription** : barème en vigueur et 12 derniers mois, 1 requête toutes les 20 s. API « embargo » réservée aux éditeurs agréés | ✅ |
+| **DailyMed** | https://dailymed.nlm.nih.gov/dailymed/ · [Web services](https://dailymed.nlm.nih.gov/dailymed/app-support-web-services.cfm) | Gratuit. API REST **v2** (XML/JSON), base `https://dailymed.nlm.nih.gov/dailymed/services/` | ✅ |
+| **openFDA** | https://open.fda.gov/ | Clé gratuite, déclarée « requise ». Limites publiées : sans clé, 240 req/min et 1 000/jour par IP ; avec clé, 240 req/min et 120 000/jour. Un appel sans clé a fonctionné | ✅ |
+| **Orange Book** | [Data files](https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files) | Gratuit. ZIP de 3 fichiers séparés par « ~ ». Aussi disponible via l'API openFDA | ✅ |
+| **Drugs@FDA** | [Data files](https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files) | Gratuit. Fichiers séparés par tabulations, mis à jour chaque matin du lundi au vendredi | ✅ |
+| **NDC Directory** | [Page FDA](https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory) | Gratuit. Mise à jour quotidienne, ZIP texte ou Excel. L'inscription n'implique pas une approbation par la FDA | ✅ |
+| **GSRS / UNII** | https://gsrs.ncats.nih.gov/ · [Page FDA](https://www.fda.gov/industry/fda-data-standards-advisory-board/fdas-global-substance-registration-system) | Gratuit. UNII libres d'utilisation | 🔒 (application JavaScript) |
+| **RxNorm / RxNav** | [RxNorm](https://www.nlm.nih.gov/research/umls/rxnorm/index.html) · [Conditions RxNav](https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html) | API sans licence (sauf SNOMED CT dans RxClass), **20 req/s par IP** (100 avec clé UTS). Fichiers complets : licence UMLS gratuite. API testée | ✅ |
+| **LiverTox** | https://www.ncbi.nlm.nih.gov/books/NBK547852/ | Domaine public | 🔒 (reCAPTCHA NCBI) |
+| **LactMed** | https://www.ncbi.nlm.nih.gov/books/NBK501922/ | Gratuit. Téléchargement en masse via le LitArch Open Access Subset | 🔒 (reCAPTCHA NCBI) |
+| **MedlinePlus – Drugs, Herbs and Supplements** | https://medlineplus.gov/druginformation.html | Gratuit, information destinée aux patients (en anglais et en espagnol) | ✅ |
 
-### Données pharmacologiques et de recherche
-
-| Base | URL | Conditions d'accès | Statut |
-|---|---|---|---|
-| **DrugBank** | https://go.drugbank.com/ | Licence académique gratuite (sous critères). Releases 2026 sous **CC BY-NC 4.0**. Usage commercial : licence payante | ✅ (statut CC0 « Open Data » incertain) |
-| **DrugCentral** (Univ. New Mexico) | https://drugcentral.org/ · [Download](https://drugcentral.org/download) | Gratuit, « open access ». Dump PostgreSQL du 01/11/2023. Licence des données non explicite | 🟡 |
-| **ChEMBL** (EMBL-EBI) | https://www.ebi.ac.uk/chembl/ | **CC BY-SA 3.0**. FTP, SQLite, API REST, SPARQL | ✅ |
-| **PubChem** (NCBI) | https://pubchem.ncbi.nlm.nih.gov/ | Gratuit | ⚠️ licence non confirmée |
-| **KEGG DRUG** | https://www.genome.jp/kegg/drug/ · [Conditions](https://www.kegg.jp/kegg/legal.html) | Site web gratuit pour un usage académique. FTP **payant**. Usage commercial sous licence. Sous-ensemble MEDICUS gratuit sur le FTP GenomeNet | ✅ |
-| **Wikidata** | https://www.wikidata.org/ | — | ⚠️ |
-
-### Sources thématiques (interactions, effets indésirables)
+### 5.3 Autres agences nationales
 
 | Base | URL | Conditions d'accès | Statut |
 |---|---|---|---|
-| **DDInter 2.0** | https://ddinter2.scbdd.com/ (v1 : https://ddinter.scbdd.com/) | Gratuit, sans inscription. 302 516 interactions médicament-médicament et 2 310 médicaments, plus interactions avec aliments et maladies | ✅ |
-| **CredibleMeds** – QTdrugs | https://crediblemeds.org/ | **Inscription gratuite obligatoire**. Usage commercial interdit sans licence AZCERT | ✅ |
-| **SIDER** | https://sideeffects.embl.de/ | Gratuit, mais **non maintenu** : v4.1 de 2015. L'EBI annonce une nouvelle base pour 2026 | ✅ |
+| 🇨🇦 **Health Canada – DPD** | https://health-products.canada.ca/dpd-bdpp/ · API : `https://health-products.canada.ca/api/drug/` | Gratuit. **API JSON sans clé** (testée) et extraits TXT | ✅ API · ⛔ page des extraits (connexion coupée) |
+| 🇦🇺 **TGA – ARTG** | https://www.tga.gov.au/resources/artg | Recherche gratuite : résumés publics, PI, CMI | ⛔ (connexion coupée) |
+| 🇦🇺 **PBS – API** | https://data-api.health.gov.au/pbs/api/v3/ · [Portail](https://data-api-portal.health.gov.au/) | Version publique annoncée sans inscription (1 requête toutes les 20 s), mais l'URL de base renvoie **401** sans clé d'abonnement. Voir le portail | 🟡 |
+
+### 5.4 Données pharmacologiques et de recherche
+
+| Base | URL | Conditions d'accès | Statut |
+|---|---|---|---|
+| **DrugBank** | https://go.drugbank.com/ · [Release 5.1.22](https://go.drugbank.com/releases/5-1-22) | Licence académique gratuite sous critères. Jeux « Open Data » sous **CC BY-NC 4.0**. Usage commercial payant | ✅ |
+| **DrugCentral** | https://drugcentral.org/ · [Download](https://drugcentral.org/download) | Gratuit. Dump du **25/09/2026** (PostgreSQL 16 + RDKit), image Docker, API | ✅ |
+| **ChEMBL** (EMBL-EBI) | https://www.ebi.ac.uk/chembl/ | **CC BY-SA 3.0** | ✅ |
+| **PubChem** | https://pubchem.ncbi.nlm.nih.gov/ | Gratuit | 🔒 (reCAPTCHA NCBI ; licence non lue) |
+| **KEGG DRUG** | https://www.genome.jp/kegg/drug/ · [Conditions](https://www.kegg.jp/kegg/legal.html) | Site web gratuit pour un usage académique. Usage non académique sous licence commerciale (Pathway Solutions) | ✅ |
+| **Wikidata** | https://www.wikidata.org/ | **CC0** | ✅ |
+
+### 5.5 Sources thématiques
+
+| Base | URL | Conditions d'accès | Statut |
+|---|---|---|---|
+| **DDInter 2.0** | https://ddinter2.scbdd.com/ | Gratuit. 302 516 interactions et 2 290 médicaments, plus interactions avec aliments et maladies et duplications thérapeutiques | ✅ |
+| **CredibleMeds** – QTdrugs | https://crediblemeds.org/ | **Inscription gratuite obligatoire**. Usage commercial sous licence AZCERT | ✅ |
+| **SIDER 4.1** | https://sideeffects.embl.de/ | Gratuit mais **non maintenu** (données de 2015). L'EBI prépare une nouvelle base (annoncée pour 2026) | ✅ |
 
 ---
 
-## Recommandations selon l'usage
+## 6. Domaines encore à autoriser pour une vérification complète
 
-- **Référentiel belge officiel** (CNK, prix, remboursement) : **SAM v2**, avec en complément les fichiers de référence INAMI.
-- **Usage clinique en Belgique** : **CBIP**, avec en complément **AFMPS** pour les RCP et notices, et **PharmaStatus** pour les ruptures.
-- **Intégration logicielle via API sans inscription** : RxNav, DailyMed, ClinicalTrials.gov v2, API publique PBS, CIMA, DDInter.
-- **Données réutilisables sous licence ouverte** : BDPM (Licence Ouverte), ChEMBL (CC BY-SA), LiverTox (domaine public), UNII/GSRS.
-- **Prudence en usage commercial** : DrugBank (NC), KEGG, CredibleMeds, Thériaque (API), ATC/DDD (fichiers).
+```
+pharmastatut.be
+www.edqm.eu
+www.samportal.be
+```
 
-## Sources consultées (sélection)
+Restent non vérifiables automatiquement, même avec les domaines autorisés :
+- **contrôles anti-robot** : afmps.be, reCAPTCHA du NCBI ;
+- **connexions coupées par le serveur** : ebmpracticenet.be, tga.gov.au, canada.ca, data.gouv.fr.
 
-- [INAMI – SAMv2 pour les fournisseurs de logiciels](https://www.inami.fgov.be/fr/themes/esante/informations-techniques-et-enregistrement-pour-les-fournisseurs-de-logiciels-destines-aux-dispensateurs-de-soins/fournisseurs-de-logiciels-la-source-authentique-des-medicaments-samv2)
-- [INAMI – Contrat de licence réutilisateur SAM](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx)
-- [AFMPS – Circulaire 592 (publication RCP/PIL)](https://www.fagg-afmps.be/sites/default/files/downloads/circulaire-592-RCP-PIL-FR-2012-10-30.pdf)
-- [AFMPS – PharmaStatus](https://www.afmps.be/en/human_use/medicines/medicines/information_about_medicines/pharmastatus)
-- [EMA – Download medicine data](https://www.ema.europa.eu/en/medicines/download-medicine-data)
-- [Commission européenne – Union Register](https://health.ec.europa.eu/medicinal-products/union-register_en)
-- [EMA – Annonce de publication des effets indésirables](https://www.ema.europa.eu/en/news/european-medicines-agency-boosts-eu-transparency-online-publication-suspected-side-effect-reports)
-- [BDPM – Téléchargement](https://base-donnees-publique.medicaments.gouv.fr/telechargement)
-- [NICE – BNF UK only](https://www.nice.org.uk/bnf-uk-only)
-- [Ärzteblatt – BfArM : accès gratuit](https://www.aerzteblatt.de/nachrichten/157230/BfArM-erweitert-oeffentlichen-Zugang-zu-Arzneimittel-und-Zulassungsdaten)
-- [WHOCC – ATC/DDD Index 2026](https://atcddd.fhi.no/atc_ddd_index/)
-- [WHO – ICTRP](https://www.who.int/ictrp/data)
-- [RxNav – Terms of Service](https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html)
-- [DrugBank – Release 5.1.22](https://go.drugbank.com/releases/5-1-22)
-- [KEGG – Legal](https://www.kegg.jp/kegg/legal.html)
-- [PBS – Webinaire API (février 2024)](https://data.pbs.gov.au/download/data-distribution/files/API-webinar-files/Webinar-API-updates-26-February-2024.pdf)
-- [Health Canada – DPD extracts](https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/drug-product-database/extracts.html)
-- [DDInter 2.0 (NAR 2025)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11701621/)
-- [CredibleMeds – Drug list](https://crediblemeds.org/druglist)
-- [FDA – GSRS](https://www.fda.gov/industry/fda-resources-data-standards/fdas-global-substance-registration-system)
-- [FDA – Orange Book data files](https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files)
+Ces pages s'ouvrent normalement dans un navigateur.
