@@ -56,7 +56,7 @@ Pour un médecin belge, aucune de ces sources ne remplace le RCP belge ou europ�
 
 | Besoin | Source | Conditions vérifiées |
 |---|---|---|
-| Référentiel belge complet | **SAM v2** | « Base de données ouverte » utilisable librement selon le [contrat de licence réutilisateur](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx), gérée par l'AFMPS, le CBIP, l'INAMI et le SPF Économie. Accès par webservices (DICS via l'eHealth Service Bus) ou export depuis le site eSanté |
+| Référentiel belge complet | **SAM v2** | « Base de données ouverte » utilisable librement selon le [contrat de licence réutilisateur](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx), gérée par l'AFMPS, le CBIP, l'INAMI et le SPF Économie. **Exports XML (complets et différentiels) publics, sans contrôle d'accès, générés plusieurs fois par jour** sur [websamcivics](https://www.vas.ehealth.fgov.be/websamcivics/samcivics/) (schéma XSD v6). **Webservices DICS** (`services.ehealth.fgov.be/Dics/v5`) : certificat eHealth requis, donc réservés aux prestataires et établissements de soins belges. Voir le [portail SAM](https://www.samportal.be/fr/sam/access) |
 | Contenu CBIP structuré | **Base de données DME du CBIP** | SQL et CSV (UTF-8), en français et néerlandais, **gratuite**, publiée chaque mois vers le 18 (dernière : septembre 2026) |
 | Remboursement | **Fichiers de référence INAMI** | Access et Excel mensuels |
 | Interopérabilité internationale | ATC (OMS), RxNorm, IDMP/SPOR (EMA) | Voir les tableaux détaillés ci-dessous |
@@ -67,7 +67,7 @@ Un logiciel d'aide à la décision clinique peut relever du **Règlement (UE) 20
 
 ## 2. Méthode et légende
 
-Les URL ont été testées **en direct** depuis l'environnement de travail le 19/10/2026, après autorisation des domaines nécessaires. Pour 92 URL :
+Les URL ont été testées **en direct** depuis l'environnement de travail le 19/10/2026, après autorisation des domaines nécessaires. Contrôle final : 84 URL du document, dont 75 en HTTP 200 ; les autres échecs sont tous expliqués (section 6). Lors de la première passe, sur 92 URL :
 - **79** ont répondu HTTP 200 ;
 - les autres étaient protégées contre les robots, redirigées vers un domaine non autorisé ou refusées par le serveur.
 
@@ -82,7 +82,7 @@ Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Qu
 
 ### Changements par rapport à la version précédente
 
-- **SAM v2** : prescription en DCI obligatoire pour certains antibiotiques au 01/04/2027. Contenu du contrat de licence lu en direct.
+- **SAM v2** : prescription en DCI obligatoire pour certains antibiotiques au 01/04/2027. Contenu du contrat de licence lu en direct. **Exports XML publics, sans authentification**, plusieurs fois par jour. Les webservices exigent un certificat eHealth.
 - **CBIP** : base DME gratuite confirmée (mise à jour de septembre 2026). Répertoire révisé tous les deux ans depuis 2026. Rubrique grossesse et allaitement complète.
 - **openFDA** : la page officielle indique que la clé API est « requise ». Les limites sans clé (240 requêtes/min, 1 000/jour par IP) restent publiées, et un appel sans clé a fonctionné.
 - **RxNav** : limite de 20 requêtes/s par IP, portée à 100 avec une clé UTS (licence UMLS gratuite).
@@ -100,10 +100,10 @@ Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Qu
 | Base | URL | Contenu | Conditions d'accès | Statut |
 |---|---|---|---|---|
 | **AFMPS – Banque de données des médicaments à usage humain** | https://banquededonneesmedicaments.afmps-fagg.be/ | Médicaments autorisés (humain et vétérinaire), RCP, notices, CNK, mode de délivrance, statut de commercialisation, RMA, DHPC | Gratuit, sans inscription | 🔒 (application JavaScript ; afmps.be protégé contre les robots) |
-| **SAM v2** – Source Authentique des Médicaments | [Page INAMI](https://www.inami.fgov.be/fr/themes/esante/informations-techniques-et-enregistrement-pour-les-fournisseurs-de-logiciels-destines-aux-dispensateurs-de-soins/fournisseurs-de-logiciels-la-source-authentique-des-medicaments-samv2) · [Spécification d'export](https://ehealth.fgov.be/ehealthplatform/file/cc73d96153bbd5448a56f19d925d05b1379c7f21/79b4783a893f05f23ebc42e9d78709872a9dae99/sam-v2-export-3.4.0.pdf) · [Licence](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx) | Référentiel officiel : AMP/VMP, conditionnements, remboursement, prix, Chapitre IV | Base ouverte sous contrat de licence réutilisateur. Webservices DICS (eHealth) et export eSanté. Documentation sur samportal.be | ✅ |
+| **SAM v2** – Source Authentique des Médicaments | [Page INAMI](https://www.inami.fgov.be/fr/themes/esante/informations-techniques-et-enregistrement-pour-les-fournisseurs-de-logiciels-destines-aux-dispensateurs-de-soins/fournisseurs-de-logiciels-la-source-authentique-des-medicaments-samv2) · [Spécification d'export](https://ehealth.fgov.be/ehealthplatform/file/cc73d96153bbd5448a56f19d925d05b1379c7f21/79b4783a893f05f23ebc42e9d78709872a9dae99/sam-v2-export-3.4.0.pdf) · [Licence](https://www.inami.fgov.be/SiteCollectionDocuments/accord_licence_reutilisation_software_20230608.docx) | Référentiel officiel : AMP/VMP, conditionnements, remboursement, prix, Chapitre IV | Base ouverte sous contrat de licence réutilisateur. **Exports XML publics sans authentification**, plusieurs fois par jour ([websamcivics](https://www.vas.ehealth.fgov.be/websamcivics/samcivics/)). Webservices DICS avec certificat eHealth. Documentation et XSD (v6.0.2, depuis le 21/09/2023) sur le [portail SAM](https://www.samportal.be/fr/sam/documentation) | ✅ (domaine d'export vas.ehealth.fgov.be non testé) |
 | **CBIP / BCFI – Répertoire commenté** | https://www.cbip.be/fr/ · [Téléchargements](https://www.cbip.be/fr/download) | Information indépendante, Folia, Formulaire personnes âgées, Guide BAPCOC | Consultation gratuite. Base DME SQL/CSV gratuite et mensuelle | ✅ |
 | **INAMI – Spécialités remboursables** | [Listes et fichiers](https://www.inami.fgov.be/fr/themes/soins-de-sante-cout-et-remboursement/les-prestations-de-sante-que-vous-rembourse-votre-mutualite/medicaments/remboursement-d-un-medicament/specialites-pharmaceutiques-remboursables/specialites-pharmaceutiques-remboursables-listes-et-fichiers-de-reference) · [Description](https://www.riziv-inami.fgov.be/SiteCollectionDocuments/liste-specialites-pharmaceutiques-remboursables-description-fichier-reference.pdf) | Remboursement, Chapitre IV, ATC, CNK | Gratuit. Fichiers Access et Excel mensuels | ✅ |
-| **PharmaStatus / PharmaStatut** | [Page AFMPS](https://www.afmps.be/en/human_use/medicines/medicines/information_about_medicines/pharmastatus) | Disponibilité, ruptures, arrêts de commercialisation | Gratuit. Alertes e-mail | 🔒 (redirection vers pharmastatut.be, domaine non testé) |
+| **PharmaStatus / PharmaStatut** | https://pharmastatut.be/ · [Page AFMPS](https://www.afmps.be/en/human_use/medicines/medicines/information_about_medicines/pharmastatus) | Disponibilité, ruptures, arrêts de commercialisation | Gratuit. Alertes e-mail | 🔒 (application JavaScript joignable ; contenu confirmé par recherche web) |
 | **Notification d'effets indésirables** | https://www.notifieruneffetindesirable.be/ | Formulaire officiel pour patients et professionnels | Gratuit | 🔒 (application JavaScript) |
 | **EBMPracticeNet** | https://www.ebmpracticenet.be/ | Guidelines belges et internationales (Duodecim), en français et néerlandais | Gratuit pour les professionnels belges (financement INAMI, sources 2013–2017) | ⛔ (connexion coupée par le serveur) |
 
@@ -119,7 +119,7 @@ Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Qu
 | **CTIS** – essais cliniques (public) | https://euclinicaltrials.eu/ · [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-development/clinical-trials-human-medicines/clinical-trials-information-system-ctis) | Essais UE/EEE depuis le 31/01/2022 | Gratuit, sans connexion | ✅ |
 | **EU Clinical Trials Register** (historique) | https://www.clinicaltrialsregister.eu/ | Essais relevant de l'ancienne Directive 2001/20/CE, résultats | Gratuit | ✅ |
 | **EMA SPOR** (PMS/SMS, IDMP) | https://spor.ema.europa.eu/ · [Page EMA](https://www.ema.europa.eu/en/human-regulatory-overview/research-and-development/data-medicines-iso-idmp-standards-overview/substance-product-organisation-and-referential-spor-master-data/substance-and-product-data-management-services) | Référentiels substances, produits, organisations | Principalement pour régulateurs et industrie | 🟡 |
-| **European Paediatric Formulary** (EDQM) | [EDQM](https://edqm.eu/en/-/european-paediatric-formulary-online) | Préparations magistrales pédiatriques | Gratuit | ⛔ (redirection vers www.edqm.eu, domaine non autorisé) |
+| **European Paediatric Formulary** (EDQM) | [EDQM](https://edqm.eu/en/-/european-paediatric-formulary-online) | Préparations magistrales pédiatriques | Gratuit | 🔒 (défi anti-robot Cloudflare sur www.edqm.eu ; contenu confirmé par recherche web) |
 
 ### Bases nationales européennes
 
@@ -129,7 +129,7 @@ Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Qu
 | 🇫🇷 | **Thériaque** (CNHIM) | https://www.theriaque.org/ | **Inscription gratuite**, ouverte aux professionnels belges. Offres payantes (API, hôpitaux). Base mise à jour le 18/10/2026 | ✅ |
 | 🇫🇷 | **CRAT** – grossesse et allaitement | https://www.lecrat.fr/ | Accès libre. **Site en maintenance**, recherche fonctionnelle | ✅ |
 | 🇫🇷 | Miroir BDPM sur data.gouv.fr | [data.gouv.fr](https://www.data.gouv.fr/datasets/base-de-donnees-publique-des-medicaments-defi-idoc-sante) | Licence Ouverte | ⛔ (connexion coupée) |
-| 🇪🇸 | **CIMA** (AEMPS) | https://cima.aemps.es/cima/publico/home.html · API : `https://cima.aemps.es/cima/rest/` | Gratuit. **API REST sans clé** (testée : JSON renvoyé) | ✅ |
+| 🇪🇸 | **CIMA** (AEMPS) | https://cima.aemps.es/cima/publico/home.html · API : `https://cima.aemps.es/cima/rest/medicamentos?nombre=…` | Gratuit. **API REST sans clé** (testée : JSON renvoyé) | ✅ |
 | 🇬🇧 | **dm+d** (NHSBSA) | [Release dm+d files](https://www.nhsbsa.nhs.uk/pharmacies-gp-practices-and-appliance-contractors/nhs-dictionary-medicines-and-devices-dmd/release-dmd-files) · https://isd.digital.nhs.uk/trud/ | Gratuit via TRUD (compte et licence). Diffusion hebdomadaire (dernière : 19/10/2026) | ✅ |
 | 🇬🇧 | **emc** | https://www.medicines.org.uk/emc | RCP, notices et RMM gratuits. Compte optionnel pour les alertes. Index des médicaments sous triangle noir | ✅ |
 | 🇬🇧 | **BNF / BNFc** (NICE) | https://bnf.nice.org.uk/ | **Réservé aux utilisateurs au Royaume-Uni** ([NICE](https://www.nice.org.uk/bnf-uk-only)). Ailleurs : MedicinesComplete, payant | ✅ (403 confirmé hors UK) |
@@ -199,16 +199,13 @@ Les conditions d'accès ont été vérifiées en lisant le contenu des pages. Qu
 
 ---
 
-## 6. Domaines encore à autoriser pour une vérification complète
+## 6. Limites de la vérification
 
-```
-pharmastatut.be
-www.edqm.eu
-www.samportal.be
-```
+Tous les domaines nécessaires ont été autorisés, sauf `www.vas.ehealth.fgov.be` (portail d'export SAM, documenté sur le portail SAM).
 
-Restent non vérifiables automatiquement, même avec les domaines autorisés :
-- **contrôles anti-robot** : afmps.be, reCAPTCHA du NCBI ;
-- **connexions coupées par le serveur** : ebmpracticenet.be, tga.gov.au, canada.ca, data.gouv.fr.
+Restent non lisibles automatiquement :
+- **contrôles anti-robot** : afmps.be, edqm.eu (Cloudflare), reCAPTCHA du NCBI (LiverTox, LactMed, PubChem) ;
+- **applications JavaScript** : base AFMPS, pharmastatut.be, notifieruneffetindesirable.be, AIFA, Swissmedicinfo, VigiAccess, GSRS ;
+- **connexions coupées par le serveur** : ebmpracticenet.be, tga.gov.au, canada.ca (page des extraits), data.gouv.fr.
 
-Ces pages s'ouvrent normalement dans un navigateur.
+Ces pages s'ouvrent normalement dans un navigateur. Leur contenu a été confirmé par recherche web.
