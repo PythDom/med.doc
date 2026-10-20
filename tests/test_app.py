@@ -1,5 +1,7 @@
 """Tests du chargeur SAM v2, de l'export de la page et du serveur local, sur un mini-export synthétique."""
 import http.client
+import shutil
+import subprocess
 import http.server
 import json
 import pathlib
@@ -21,7 +23,7 @@ AMP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
     <MedicineType>ALLOPATHIC</MedicineType></Data>
     <Ampp ctiExtended="1-01"><Data from="2020-01-01"><Atc code="N02BF01"><Description>Gabapentin</Description></Atc>
       <DeliveryModus code="M1"><Description><Fr>Prescription médicale - Art 6</Fr></Description></DeliveryModus>
-      <PrescriptionNameFamhp><Fr>Gabapentine A 400 mg gél. 90</Fr></PrescriptionNameFamhp>
+      <PrescriptionNameFamhp><Fr>Gabapentine A 400 mg gél. 90</Fr></PrescriptionNameFamhp><PackDisplayValue><Fr>90</Fr></PackDisplayValue>
       <Status>AUTHORIZED</Status><CrmLink><Fr>http://cbip/a</Fr></CrmLink></Data>
       <Commercialization><Data from="2020-01-01"/></Commercialization>
       <SupplyProblem><Data from="2026-10-01"><ExpectedEndOn>2026-12-30</ExpectedEndOn>
@@ -34,7 +36,7 @@ AMP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
   <Amp code="SAM2-00" vmpCode="10"><Data from="2020-01-01"><OfficialName>Gabapentine B</OfficialName>
     <Status>AUTHORIZED</Status><Name><Fr>Gabapentine B</Fr></Name></Data>
     <Ampp ctiExtended="2-01"><Data from="2020-01-01"><Atc code="N02BF01"/>
-      <PrescriptionNameFamhp><Fr>Gabapentine B 400 mg gél. 100</Fr></PrescriptionNameFamhp>
+      <PrescriptionNameFamhp><Fr>Gabapentine B 400 mg gél. 100</Fr></PrescriptionNameFamhp><PackDisplayValue><Fr>200 (2 x 100)</Fr></PackDisplayValue>
       <Status>AUTHORIZED</Status></Data>
       <Commercialization><Data from="2020-01-01"/></Commercialization>
       <Dmpp code="1000002" deliveryEnvironment="P"><Data from="2020-01-01" to="2025-12-31"><Price>99.00</Price>
@@ -55,7 +57,11 @@ VMP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
   <Vtm code="5"><Data from="2016-01-01"><Name><Fr>gabapentine</Fr></Name></Data></Vtm>
   <VmpGroup code="77"><Data from="2016-01-01"><Name><Fr>gabapentine oral 400 mg</Fr></Name></Data></VmpGroup>
   <Vmp code="10"><Data from="2016-01-01"><Name><Fr>gabapentine 400 mg capsule</Fr></Name>
-    <VmpGroup code="77"/><Vtm code="5"/></Data></Vmp>
+    <VmpGroup code="77"/><Vtm code="5"/></Data>
+    <VmpComponent><Data from="2016-01-01"/><VirtualIngredient><Data from="2016-01-01"><Type>ACTIVE_SUBSTANCE</Type>
+      <Substance code="1"><Name><Fr>Gabapentine</Fr></Name></Substance>
+      <Strength><NumeratorRange unit="mg"><Min>400.0000</Min><Max>400.0000</Max></NumeratorRange>
+      <Denominator unit="1">1.0000</Denominator></Strength></Data></VirtualIngredient></VmpComponent></Vmp>
 </ExportVirtualMedicines>"""
 
 RMB_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -129,6 +135,40 @@ class AppTest(unittest.TestCase):
         self.assertEqual(len(data["contexts"]["1000002"]), 2)
         prefix, suffix = products["1000001"][14][0]  # lien CBIP
         self.assertEqual(data["prefixes"][prefix] + suffix, "http://cbip/a")
+
+    def test_pack_and_substance(self):
+        raw = sqlite3.connect(self.db_path)
+        self.assertEqual(raw.execute("SELECT amount, unit, denominator, denominator_unit FROM vmp_ingredient").fetchall(),
+                         [(400.0, "mg", 1.0, "1")])
+        raw.close()
+        products = {p[0]: p for p in export_static.build(self.db_path)["products"]}
+        self.assertEqual(products["1000001"][15:], [90.0, "", 36000.0, "mg"])
+        self.assertEqual(products["1000002"][15:], [200.0, "", 80000.0, "mg"])
+        self.assertEqual(export_static.parse_pack("5 x 1 ml + 5 x Injection needle"), (5.0, "ml"))
+        self.assertEqual(export_static.parse_pack("1 l"), (1000.0, "ml"))
+        self.assertEqual(export_static.parse_pack("Kit"), (None, None))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js non installé")
+    def test_page_highlight_functions(self):
+        template = export_static.TEMPLATE.read_text(encoding="utf-8")
+        pure = template.split("// BEGIN-PURE")[1].split("\n", 1)[1].split("// END-PURE")[0]
+        script = pure + """
+const src = { qty: 90, unit: "", price: 25.25 };
+const a = { name: "a", qty: 100, unit: "", price: 23.52, subst: 40000 };
+const b = { name: "b", qty: 90, unit: "", price: 25.08, subst: 36000 };
+const c = { name: "c", qty: 90, unit: "", price: 25.25, subst: 36000 };
+const d = { name: "d", qty: 200, unit: "", price: 46.14, subst: 80000 };
+const e = { name: "e", qty: 90, unit: "ml", price: 1 };
+const rows = [a, b, c, d, e];
+const h = withHighlights([a, b, c, d], [[closestQuantity(src, rows), "proche"], [cheapestBy([a, b, c, d], perUnit), "unité"]], 2);
+console.log(JSON.stringify({
+  closest: closestQuantity(src, rows).name, perUnit: cheapestBy([a, b, c, d], perUnit).name,
+  perSubstance: cheapestBy(rows, perSubstance).name, none: closestQuantity({ qty: null }, rows),
+  order: h.rows.map(x => x.name), tags: [...h.tags.values()] }));
+"""
+        out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout
+        self.assertEqual(json.loads(out), {"closest": "b", "perUnit": "d", "perSubstance": "d", "none": None,
+                                           "order": ["b", "d"], "tags": [["proche"], ["unité"]]})
 
     def test_render_standalone_page(self):
         page = export_static.render(self.db_path)

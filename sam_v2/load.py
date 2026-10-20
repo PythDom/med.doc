@@ -30,6 +30,8 @@ CREATE TABLE reimbursement (cnk TEXT, delivery_environment TEXT, legal_reference
 CREATE TABLE copayment (cnk TEXT, delivery_environment TEXT, legal_reference_path TEXT,
     regime_type TEXT, fee REAL);
 CREATE TABLE vmp (vmp_code TEXT PRIMARY KEY, name TEXT, vmp_group_code TEXT, vtm_code TEXT);
+CREATE TABLE vmp_ingredient (vmp_code TEXT, substance TEXT, amount REAL, unit TEXT,
+    denominator REAL, denominator_unit TEXT);
 CREATE TABLE vmp_group (vmp_group_code TEXT PRIMARY KEY, name TEXT, no_switch_reason TEXT,
     no_generic_prescription_reason TEXT);
 CREATE TABLE vtm (vtm_code TEXT PRIMARY KEY, name TEXT);
@@ -184,6 +186,18 @@ def load_vmp(db, xml_dir, today):
         if name == "Vmp":
             db.execute("INSERT INTO vmp VALUES (?,?,?,?)", (
                 el.get("code"), text(d, "Name"), attr(d, "VmpGroup"), attr(d, "Vtm")))
+            for component in children(el, "VmpComponent"):
+                for ingredient in children(component, "VirtualIngredient"):
+                    idata = current(ingredient, today)
+                    strength = child(idata, "Strength")
+                    if idata is None or text(idata, "Type") != "ACTIVE_SUBSTANCE" or strength is None:
+                        continue
+                    numerator, denominator = child(strength, "NumeratorRange"), child(strength, "Denominator")
+                    low, high = num(text(numerator, "Min")), num(text(numerator, "Max"))
+                    db.execute("INSERT INTO vmp_ingredient VALUES (?,?,?,?,?,?)", (
+                        el.get("code"), text(idata, "Substance", "Name"), low if low == high else None,
+                        numerator.get("unit"), num(denominator.text if denominator is not None else None),
+                        denominator.get("unit") if denominator is not None else None))
         elif name == "VmpGroup":
             db.execute("INSERT INTO vmp_group VALUES (?,?,?,?)", (
                 el.get("code"), text(d, "Name"), attr(d, "NoSwitchReason"),
