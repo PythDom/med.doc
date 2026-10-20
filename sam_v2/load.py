@@ -15,7 +15,7 @@ SCHEMA = """
 CREATE TABLE amp (amp_code TEXT PRIMARY KEY, vmp_code TEXT, name TEXT, official_name TEXT,
     status TEXT, black_triangle INTEGER, medicine_type TEXT, company TEXT);
 CREATE TABLE ampp (cti_extended TEXT PRIMARY KEY, amp_code TEXT, prescription_name TEXT, pack TEXT,
-    atc TEXT, atc_description TEXT, delivery_modus TEXT, status TEXT, generic_prescription_required INTEGER,
+    atc TEXT, atc_description TEXT, delivery_modus TEXT, delivery_modus_description TEXT, status TEXT, generic_prescription_required INTEGER,
     ex_factory_price REAL, commercialized INTEGER, end_of_commercialization TEXT,
     spc_link TEXT, leaflet_link TEXT, rma_professional_link TEXT, rma_patient_link TEXT,
     dhpc_link TEXT, cbip_link TEXT);
@@ -134,9 +134,10 @@ def load_amp(db, xml_dir, today):
                 continue
             cti = ampp.get("ctiExtended")
             commercialization = current(child(ampp, "Commercialization"), today)
-            db.execute("INSERT INTO ampp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            db.execute("INSERT INTO ampp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
                 cti, code, text(ad, "PrescriptionNameFamhp"), text(ad, "PackDisplayValue"),
                 attr(ad, "Atc"), text(ad, "Atc", "Description"), attr(ad, "DeliveryModus"),
+                text(ad, "DeliveryModus", "Description"),
                 text(ad, "Status"), flag(text(ad, "GenericPrescriptionRequired")),
                 num(text(ad, "ExFactoryPrice")), int(commercialization is not None),
                 text(ad, "EndOfCommercialization"),
