@@ -1,0 +1,358 @@
+<title>Officine SAM</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout : barre de recherche collante, puis deux colonnes (résultats | fiche) qui s'empilent sur téléphone. */
+:root {
+  --bg: #f3f6f5; --surface: #ffffff; --ink: #17221f; --muted: #5a6a65; --line: #d6dedb;
+  --accent: #0f7a5c; --accent-soft: #e2f2ec; --accent-ink: #ffffff;
+  --ok: #1b6e39; --ok-bg: #e2f4e7; --warn: #845400; --warn-bg: #fbefd2;
+  --bad: #ad2318; --bad-bg: #fbe6e3; --info: #1d5a85; --info-bg: #e2edf6;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1513; --surface: #161f1c; --ink: #e3ebe8; --muted: #93a39d; --line: #2a3632;
+  --accent: #4cc39a; --accent-soft: #163a2e; --accent-ink: #0b1a14;
+  --ok: #74d394; --ok-bg: #163322; --warn: #efc263; --warn-bg: #382c11;
+  --bad: #ff8b80; --bad-bg: #3b1a17; --info: #8fc5ef; --info-bg: #162f47; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #161f1c; --ink: #e3ebe8; --muted: #93a39d; --line: #2a3632;
+  --accent: #4cc39a; --accent-soft: #163a2e; --accent-ink: #0b1a14;
+  --ok: #74d394; --ok-bg: #163322; --warn: #efc263; --warn-bg: #382c11;
+  --bad: #ff8b80; --bad-bg: #3b1a17; --info: #8fc5ef; --info-bg: #162f47; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, .cnk { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.top-inner { max-width: 1240px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.brand { display: flex; align-items: center; gap: 8px; font: 600 19px/1 var(--display); letter-spacing: .01em; }
+.cross { width: 22px; height: 22px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border-radius: 4px; font: 700 16px/1 var(--body); }
+.searchbox { flex: 1 1 320px; display: flex; gap: 8px; min-width: 0; }
+.searchbox input[type=search] { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: 15px var(--body); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); color: var(--muted); padding: 8px 12px; font: 500 13px var(--body); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.regime { display: flex; align-items: center; gap: 8px; }
+
+.notice { max-width: 1240px; margin: 0 auto; padding-block: 10px 0; font-size: 13px; color: var(--muted); }
+main { max-width: 1240px; margin: 0 auto; padding-block: 14px 40px; display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.results-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.notice { overflow-wrap: anywhere; }
+.results-head h2 { margin: 0; font: 600 15px var(--display); letter-spacing: .02em; }
+.toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.results { list-style: none; margin: 0; padding: 0; max-height: 72vh; overflow-y: auto; }
+@media (max-width: 860px) { .results { max-height: 46vh; } }
+.results li button { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); padding: 9px 14px; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; font: inherit; }
+.results li button:hover { background: var(--bg); }
+.results li button[aria-current="true"] { background: var(--accent-soft); }
+.r-name { font-weight: 500; overflow-wrap: anywhere; }
+.r-price { font-size: 13px; }
+.r-sub { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--muted); }
+.empty { padding: 18px 14px; color: var(--muted); }
+
+.detail { display: grid; gap: 16px; min-width: 0; }
+.card { padding: 18px 20px; }
+.card h2 { margin: 0 0 12px; font: 600 17px var(--display); letter-spacing: .02em; }
+h1 { margin: 0 0 4px; font: 600 26px/1.15 var(--display); text-wrap: balance; overflow-wrap: anywhere; }
+.subline { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 12px; }
+.chip { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); } .chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); } .chip.info { background: var(--info-bg); color: var(--info); }
+.chip.cat { font-family: var(--mono); background: var(--info-bg); color: var(--info); }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 18px; margin: 0; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; overflow-wrap: anywhere; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; }
+.links a { font-weight: 500; }
+
+.alert { border-color: var(--bad); background: var(--bad-bg); }
+.alert h2 { color: var(--bad); }
+.wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+td.num, th.num { text-align: right; } td.num { white-space: nowrap; }
+td.ctx { min-width: 150px; }
+.crit { color: var(--muted); font-size: 13px; min-width: 160px; }
+.total { font-weight: 600; }
+.hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.level { margin-top: 18px; } .level:first-of-type { margin-top: 0; }
+.level h3 { margin: 0 0 6px; font: 600 14px var(--body); }
+.level p.why { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+tr.pick td { background: var(--accent-soft); }
+tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.picks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip.pick { background: var(--accent); color: var(--accent-ink); white-space: normal; border-radius: 6px; line-height: 1.35; padding-block: 3px; }
+.per { color: var(--muted); font-size: 12px; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 500; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: no-preference) { .results li button, .seg button { transition: background-color .12s; } }
+</style>
+
+<header class="top"><div class="top-inner gutter">
+  <div class="brand"><span class="cross" aria-hidden="true">+</span>Officine SAM</div>
+  <form class="searchbox" id="search-form" role="search">
+    <input type="search" id="q" placeholder="Nom, substance ou CNK…" aria-label="Rechercher un médicament" autocomplete="off">
+  </form>
+  <div class="regime"><span class="seg-label" id="regime-label">Patient</span>
+    <div class="seg" role="group" aria-labelledby="regime-label">
+      <button type="button" id="regime-2" data-regime="2" aria-pressed="true">Ordinaire</button>
+      <button type="button" id="regime-1" data-regime="1" aria-pressed="false">BIM</button>
+    </div></div>
+</div></header>
+<p class="notice gutter" id="notice"></p>
+<main class="gutter">
+  <section class="panel" aria-labelledby="results-title">
+    <div class="results-head"><h2 id="results-title">Résultats</h2>
+      <label class="toggle"><input type="checkbox" id="only-shortage"> En rupture seulement</label></div>
+    <ul class="results" id="results"></ul>
+  </section>
+  <section class="detail" id="detail" aria-live="polite"></section>
+</main>
+
+<script>
+const DATA = /*__DATA__*/null;
+const T = DATA.text, PFX = DATA.prefixes;
+const F = { cheap: 1, cheapest: 2, reimb: 4, marketed: 8, black: 16, dci: 32, authorized: 64 };
+const LINK_NAMES = ["Fiche CBIP", "RCP", "Notice", "RMA professionnel", "RMA patient", "DHPC"];
+const t = i => (i >= 0 ? T[i] : null);
+const norm = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const euro = v => (v == null ? "—" : v.toLocaleString("fr-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €");
+const date = s => (s ? new Date(s + "T00:00:00").toLocaleDateString("fr-BE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "inconnue");
+
+const products = DATA.products.map(p => ({
+  cnk: p[0], name: p[1], cti: p[2], price: p[3], flags: p[4], atc: p[5], atcDesc: t(p[6]), delivery: t(p[7]),
+  company: t(p[8]), group: p[9], groupName: t(p[10]), vtm: p[11], substance: t(p[12]), endComm: t(p[13]),
+  links: p[14].map((l, i) => (l ? { name: LINK_NAMES[i], url: PFX[l[0]] + l[1] } : null)).filter(Boolean),
+  qty: p[15], unit: p[16], subst: p[17], substUnit: p[18],
+}));
+products.forEach(p => { p.key = norm(p.name + " " + (p.substance || "")); p.supply = DATA.supply[p.cti] || null; });
+const byCnk = new Map(products.map(p => [p.cnk, p]));
+const has = (p, f) => (p.flags & f) !== 0;
+const available = p => has(p, F.marketed) && has(p, F.authorized) && !p.supply;
+
+const index = (keyOf) => { const m = new Map(); products.forEach(p => { const k = keyOf(p); if (k) { if (!m.has(k)) m.set(k, []); m.get(k).push(p); } }); return m; };
+const byGroup = index(p => p.group), byVtm = index(p => p.vtm), byAtc5 = index(p => (p.atc && p.atc.length >= 5 ? p.atc.slice(0, 5) : null));
+
+const contexts = cnk => (DATA.contexts[cnk] || []).map(c => ({
+  chapter: c[0], paragraph: c[1], paragraphKey: t(c[2]), category: c[3], criterion: t(c[4]), bim: c[5], ordinary: c[6], supplement: c[7],
+}));
+const patientCost = (c, regime) => { const fee = regime === "1" ? c.bim : c.ordinary; return fee == null ? null : fee + (c.supplement || 0); };
+
+let regime = "2", current = null, lastQuery = null;
+try { const saved = localStorage.getItem("regime"); if (saved === "1" || saved === "2") regime = saved; } catch (e) {}
+
+function search(query, onlyShortage) {
+  const q = query.trim();
+  let rows;
+  if (/^\d+$/.test(q)) rows = products.filter(p => p.cnk === q.padStart(7, "0"));
+  else {
+    const terms = norm(q).split(/\s+/).filter(Boolean);
+    rows = terms.length ? products.filter(p => terms.every(w => p.key.includes(w))) : (onlyShortage ? products : []);
+  }
+  if (onlyShortage) rows = rows.filter(p => p.supply);
+  return rows.sort((a, b) => has(b, F.marketed) - has(a, F.marketed) || a.name.localeCompare(b.name, "fr")).slice(0, 200);
+}
+
+function statusChips(p, compact) {
+  const chips = [];
+  if (p.supply) chips.push(`<span class="chip bad">${p.supply[4] ? "Disponibilité limitée" : "En rupture"}</span>`);
+  else if (has(p, F.marketed)) { if (!compact) chips.push('<span class="chip ok">Disponible</span>'); }
+  else chips.push('<span class="chip warn">Non commercialisé</span>');
+  if (has(p, F.cheap)) chips.push('<span class="chip ok">Bon marché</span>');
+  if (has(p, F.cheapest)) chips.push('<span class="chip ok">Le moins cher</span>');
+  if (!compact && has(p, F.black)) chips.push('<span class="chip warn">▼ Surveillance additionnelle</span>');
+  if (!compact && has(p, F.dci)) chips.push('<span class="chip info">Prescription en DCI obligatoire</span>');
+  if (compact && !has(p, F.reimb)) chips.push('<span class="chip warn">Non remboursé</span>');
+  return chips.join("");
+}
+
+function renderResults() {
+  const query = document.getElementById("q").value, only = document.getElementById("only-shortage").checked;
+  const rows = search(query, only);
+  const list = document.getElementById("results");
+  document.getElementById("results-title").textContent = query.trim() || only
+    ? `${rows.length === 200 ? "200+" : rows.length} résultat${rows.length > 1 ? "s" : ""}` : "Résultats";
+  if (!rows.length) {
+    list.innerHTML = `<li class="empty">${query.trim() ? "Aucun conditionnement en officine ne correspond. Essayez la substance (ex. « gabapentine ») ou un CNK à 7 chiffres." : "Tapez un nom, une substance ou un CNK."}</li>`;
+    return;
+  }
+  list.innerHTML = rows.map(p => `<li><button type="button" data-cnk="${p.cnk}" aria-current="${current && current.cnk === p.cnk}">
+    <span class="r-name">${esc(p.name)}</span><span class="r-price num">${euro(p.price)}</span>
+    <span class="r-sub"><span class="cnk">${p.cnk}</span>${statusChips(p, true)}</span></button></li>`).join("");
+}
+
+function costCell(p) {
+  const costs = contexts(p.cnk).map(c => patientCost(c, regime)).filter(v => v != null);
+  if (!costs.length) return has(p, F.reimb) ? "—" : `${euro(p.price)}<div class="hint">non remboursé</div>`;
+  const lo = Math.min(...costs), hi = Math.max(...costs);
+  return lo === hi ? euro(lo) : `${euro(lo)} – ${euro(hi)}<div class="hint">selon l'indication</div>`;
+}
+
+// BEGIN-PURE : fonctions sans accès à la page, testées par tests/test_app.py (Node.js).
+/** Prix par unité de la boîte (comprimé, gélule, ml, g). */
+function perUnit(x) { return x.price != null && x.qty ? x.price / x.qty : null; }
+/** Prix par mg de substance active (ou par unité de substance quand ce n'est pas une masse). */
+function perSubstance(x) { return x.price != null && x.subst ? x.price / x.subst : null; }
+/** Le moins cher selon une mesure de prix ; null si aucune ligne n'est mesurable. */
+function cheapestBy(rows, measure) {
+  let best = null, bestValue = Infinity;
+  for (const x of rows) { const v = measure(x); if (v != null && v < bestValue) { best = x; bestValue = v; } }
+  return best;
+}
+/** Boîte au contenu le plus proche de celui du produit choisi ; à écart égal, la moins chère. */
+function closestQuantity(src, rows) {
+  if (src.qty == null) return null;
+  let best = null;
+  for (const x of rows) {
+    if (x.qty == null || x.unit !== src.unit || x.price == null) continue;
+    const gap = Math.abs(x.qty - src.qty), bestGap = best && Math.abs(best.qty - src.qty);
+    if (!best || gap < bestGap || (gap === bestGap && x.price < best.price)) best = x;
+  }
+  return best;
+}
+/** Met les lignes mises en évidence en tête, dans l'ordre des étiquettes, puis le reste trié par prix. */
+function withHighlights(rows, picks, limit) {
+  const tags = new Map();
+  for (const [row, label] of picks) if (row) tags.set(row, [...(tags.get(row) || []), label]);
+  const first = [...tags.keys()], rest = rows.filter(x => !tags.has(x));
+  return { rows: first.concat(rest).slice(0, Math.max(limit, first.length)), tags };
+}
+// END-PURE
+
+function alternativeLevels(p) {
+  const candidates = (list, extra) => (list || []).filter(x => x.cti !== p.cti && available(x) && extra(x))
+    .sort((a, b) => has(b, F.reimb) - has(a, F.reimb) || (a.price ?? 1e9) - (b.price ?? 1e9));
+  const levels = [];
+  if (p.group) {
+    const rows = candidates(byGroup.get(p.group), () => true);
+    levels.push({ title: "Substituable", why: "Même substance, même dosage, même forme.", metric: "unit",
+      ...withHighlights(rows, [[closestQuantity(p, rows), "Quantité la plus proche, la moins chère"],
+                               [cheapestBy(rows, perUnit), "La moins chère par unité"]], 25) });
+  }
+  if (p.vtm) {
+    const rows = candidates(byVtm.get(p.vtm), x => x.group !== p.group);
+    const unit = p.substUnit || "mg", comparable = rows.filter(x => x.substUnit === unit);
+    levels.push({ title: "Même substance, autre dosage ou forme", why: "La posologie doit être adaptée.", metric: "substance", substUnit: unit,
+      ...withHighlights(rows, [[cheapestBy(comparable, perSubstance), unit === "mg" ? "La moins chère par gramme de substance" : "La moins chère par unité de substance"]], 25) });
+  }
+  if (p.atc && p.atc.length >= 5) {
+    const rows = candidates(byAtc5.get(p.atc.slice(0, 5)), x => x.vtm !== p.vtm);
+    levels.push({ title: `Même classe ATC (${p.atc.slice(0, 5)})`, why: "Autre molécule : décision thérapeutique.", metric: null,
+      ...withHighlights(rows, [], 25) });
+  }
+  return levels;
+}
+
+const qtyLabel = x => (x.qty == null ? "—" : `${x.qty.toLocaleString("fr-BE", { maximumFractionDigits: 1 })}${x.unit ? " " + x.unit : ""}`);
+const substLabel = x => (x.subst == null ? null : x.substUnit === "mg"
+  ? (x.subst >= 1000 ? `${(x.subst / 1000).toLocaleString("fr-BE", { maximumFractionDigits: 2 })} g` : `${x.subst.toLocaleString("fr-BE", { maximumFractionDigits: 1 })} mg`)
+  : `${x.subst.toLocaleString("fr-BE", { maximumFractionDigits: 1 })} ${x.substUnit}`);
+function metricCell(x, level) {
+  if (level.metric === "unit") { const v = perUnit(x); return v == null ? "—" : `${euro(v)}<span class="per"> / ${x.unit || "unité"}</span>`; }
+  const v = perSubstance(x);
+  if (v == null || x.substUnit !== level.substUnit) return "—";
+  return level.substUnit === "mg" ? `${euro(v * 1000)}<span class="per"> / g</span>` : `${euro(v)}<span class="per"> / ${esc(x.substUnit)}</span>`;
+}
+
+function renderDetail(p) {
+  current = p;
+  const ctx = contexts(p.cnk), s = p.supply, label = regime === "1" ? "BIM" : "ordinaire";
+  let alert = "";
+  if (s) alert = `<div class="panel card alert"><h2>Problème d'approvisionnement</h2><dl class="facts">
+    <dt>Depuis</dt><dd>${date(s[0])}</dd><dt>Fin prévue</dt><dd>${date(s[1])}</dd>
+    <dt>Motif</dt><dd>${esc(t(s[2]))}</dd><dt>Impact</dt><dd>${esc(t(s[3]))}</dd>
+    ${t(s[6]) ? `<dt>Information</dt><dd>${esc(t(s[6]))}</dd>` : ""}
+    <dt>Signalé par</dt><dd>${s[5] === "FAMHP" ? "AFMPS" : "Firme"}</dd></dl></div>`;
+  else if (!has(p, F.marketed)) alert = `<div class="panel card alert"><h2>${esc(p.endComm || "Non commercialisé actuellement")}</h2></div>`;
+
+  const ctxRows = ctx.map(c => `<tr>
+    <td class="ctx">Chapitre ${esc(c.chapter)}${c.paragraph && c.paragraph !== "0" ? `<div class="hint">§ ${esc(c.paragraph)}${c.paragraphKey ? " · " + esc(c.paragraphKey) : ""}</div>` : ""}</td>
+    <td><span class="chip cat">${esc(c.category)}</span></td><td class="crit">${esc((c.criterion || "").slice(0, 180))}</td>
+    <td class="num">${euro(c.bim)}</td><td class="num">${euro(c.ordinary)}</td>
+    <td class="num">${c.supplement ? euro(c.supplement) : "—"}</td><td class="num total">${euro(patientCost(c, regime))}</td></tr>`).join("");
+  const cost = ctx.length ? `<div class="wrap"><table><thead><tr><th>Contexte</th><th>Cat.</th><th>Critère</th>
+      <th class="num">Ticket BIM</th><th class="num">Ticket ordinaire</th><th class="num">Supplément</th><th class="num">Patient ${label}</th></tr></thead>
+      <tbody>${ctxRows}</tbody></table></div>
+      <p class="hint">Coût patient = ticket modérateur du régime choisi + supplément éventuel (système de remboursement de référence).</p>`
+    : `<p>Non remboursé : le patient paie le prix public, soit <strong class="num">${euro(p.price)}</strong>.</p>`;
+
+  const levels = alternativeLevels(p).map(level => {
+    const metricHead = level.metric === "unit" ? "Prix / unité" : level.metric === "substance" ? (level.substUnit === "mg" ? "Prix / g de substance" : "Prix / unité de substance") : null;
+    const rows = level.rows.map(x => {
+      const tags = level.tags.get(x) || [];
+      return `<tr${tags.length ? ' class="pick"' : ""}><td><button type="button" class="linkbtn" data-cnk="${x.cnk}">${esc(x.name)}</button>
+        ${tags.length ? `<div class="picks">${tags.map(tag => `<span class="chip pick">★ ${esc(tag)}</span>`).join("")}</div>` : ""}</td>
+      <td class="cnk">${x.cnk}</td><td class="num">${qtyLabel(x)}${level.metric === "substance" && substLabel(x) ? `<div class="hint">${substLabel(x)}</div>` : ""}</td>
+      <td>${has(x, F.cheap) ? '<span class="chip ok">Bon marché</span> ' : ""}${has(x, F.cheapest) ? '<span class="chip ok">Le moins cher</span>' : ""}${has(x, F.reimb) ? "" : '<span class="chip warn">Non remboursé</span>'}</td>
+      <td class="num">${euro(x.price)}</td>${metricHead ? `<td class="num">${metricCell(x, level)}</td>` : ""}<td class="num">${costCell(x)}</td></tr>`;
+    }).join("");
+    return `<div class="level"><h3>${esc(level.title)}</h3><p class="why">${esc(level.why)}</p>
+    ${level.rows.length ? `<div class="wrap"><table><thead><tr><th>Conditionnement disponible</th><th>CNK</th><th class="num">Contenu</th><th>INAMI</th>
+      <th class="num">Prix public</th>${metricHead ? `<th class="num">${metricHead}</th>` : ""}<th class="num">Patient ${label}</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : '<p class="hint">Aucun conditionnement disponible à ce niveau.</p>'}</div>`;
+  }).join("");
+
+  document.getElementById("detail").innerHTML = `${alert}
+    <article class="panel card"><h1>${esc(p.name)}</h1>
+      <div class="subline"><span>CNK <span class="cnk">${p.cnk}</span></span>${p.substance ? `<span>${esc(p.substance)}</span>` : ""}
+        ${p.atc ? `<span>ATC <span class="cnk">${esc(p.atc)}</span> ${esc(p.atcDesc || "")}</span>` : ""}${p.company ? `<span>${esc(p.company)}</span>` : ""}</div>
+      <div class="chips">${statusChips(p, false)}</div>
+      <dl class="facts"><dt>Prix public</dt><dd class="num">${euro(p.price)}</dd>
+        ${p.qty != null ? `<dt>Contenu</dt><dd>${qtyLabel(p)}${p.unit ? "" : " unités"}${substLabel(p) ? ` · ${substLabel(p)} de substance active` : ""}</dd>` : ""}
+        ${p.groupName ? `<dt>Groupe</dt><dd>${esc(p.groupName)}</dd>` : ""}${p.delivery ? `<dt>Délivrance</dt><dd>${esc(p.delivery)}</dd>` : ""}</dl>
+      <div class="links">${p.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join("") || '<span class="hint">Aucun lien officiel</span>'}</div>
+    </article>
+    <section class="panel card"><h2>Remboursement et coût pour le patient</h2>${cost}</section>
+    <section class="panel card"><h2>Alternatives disponibles</h2>${levels || '<p class="hint">Pas de groupe ni de classe ATC connus pour ce produit.</p>'}
+      <p class="hint">Seuls les conditionnements commercialisés, autorisés et sans rupture en cours sont proposés. Toute substitution reste une décision clinique.</p></section>`;
+  document.querySelectorAll("#results button[data-cnk]").forEach(b => b.setAttribute("aria-current", String(b.dataset.cnk === p.cnk)));
+}
+
+function show(cnk, scroll) {
+  const p = byCnk.get(cnk);
+  if (!p) return;
+  renderDetail(p);
+  try { history.replaceState(null, "", "#p" + cnk); } catch (e) {}
+  if (scroll && window.matchMedia("(max-width: 860px)").matches) document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function setRegime(r) {
+  regime = r;
+  try { localStorage.setItem("regime", r); } catch (e) {}
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.regime === r)));
+  if (current) renderDetail(current);
+}
+
+let timer;
+document.getElementById("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(renderResults, 120); });
+document.getElementById("search-form").addEventListener("submit", e => { e.preventDefault(); renderResults(); const first = document.querySelector("#results button[data-cnk]"); if (first) show(first.dataset.cnk, true); });
+document.getElementById("only-shortage").addEventListener("change", renderResults);
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setRegime(b.dataset.regime)));
+document.addEventListener("click", e => { const b = e.target.closest("button[data-cnk]"); if (b) show(b.dataset.cnk, true); });
+
+const m = DATA.meta, shortages = Object.keys(DATA.supply).length;
+document.getElementById("notice").textContent =
+  `Export SAM v2 ${m.export || ""} du ${date(m.reference_date)} · ${products.length.toLocaleString("fr-BE")} conditionnements en officine · ${shortages} ruptures en cours. Version de démonstration : aide à la recherche, pas à la décision.`;
+
+const fromHash = /^#p(\d{7})$/.exec(location.hash);
+document.getElementById("q").value = "gabapentine 400";
+setRegime(regime);
+renderResults();
+show(fromHash && byCnk.has(fromHash[1]) ? fromHash[1] : "1325463", false);
+</script>
