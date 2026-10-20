@@ -1,0 +1,91 @@
+"""Génère une version autonome du prototype (une seule page HTML, données intégrées).
+
+Usage : python -m app.export_static --db data/sam.sqlite --out data/medicaments.html
+La page fonctionne sans serveur : recherche, alternatives et coût patient sont calculés dans le navigateur.
+"""
+import argparse
+import json
+import pathlib
+import sqlite3
+
+from app import queries as q
+
+TEMPLATE = pathlib.Path(__file__).with_name("static_template.html")
+
+
+class Table:
+    """Table de chaînes dédupliquées : chaque texte répété n'est stocké qu'une fois."""
+
+    def __init__(self):
+        self.items, self.index = [], {}
+
+    def __call__(self, value):
+        if value is None:
+            return -1
+        if value not in self.index:
+            self.index[value] = len(self.items)
+            self.items.append(value)
+        return self.index[value]
+
+
+def split_link(url, prefixes):
+    """Découpe un lien en (préfixe dédupliqué, suffixe) pour réduire la taille."""
+    if not url:
+        return None
+    cut = url.rfind("/") + 1
+    if "=" in url[cut:]:
+        cut = url.rfind("=") + 1
+    return [prefixes(url[:cut]), url[cut:]]
+
+
+def build(db_path):
+    db = q.connect(db_path)
+    text, prefixes = Table(), Table()
+    products = []
+    for r in db.execute(f"""
+            SELECT d.cnk, d.price, d.cheap, d.cheapest, d.reimbursable, p.*, a.black_triangle, a.company,
+                   v.vmp_group_code, g.name AS group_name, v.vtm_code, vt.name AS substance
+            FROM dmpp d JOIN ampp p ON p.cti_extended = d.cti_extended JOIN amp a ON a.amp_code = p.amp_code
+            LEFT JOIN vmp v ON v.vmp_code = a.vmp_code LEFT JOIN vmp_group g ON g.vmp_group_code = v.vmp_group_code
+            LEFT JOIN vtm vt ON vt.vtm_code = v.vtm_code
+            WHERE d.delivery_environment = '{q.PUBLIC}' ORDER BY p.prescription_name"""):
+        products.append([
+            r["cnk"], r["prescription_name"], r["cti_extended"], r["price"],
+            (r["cheap"] or 0) | (r["cheapest"] or 0) << 1 | (r["reimbursable"] or 0) << 2
+            | (r["commercialized"] or 0) << 3 | (r["black_triangle"] or 0) << 4
+            | (r["generic_prescription_required"] or 0) << 5 | (r["status"] == "AUTHORIZED") << 6,
+            r["atc"], text(r["atc_description"]), text((r["delivery_modus_description"] or "").split(" - ")[0] or None),
+            text(r["company"]), r["vmp_group_code"], text(r["group_name"]), r["vtm_code"], text(r["substance"]),
+            text(r["end_of_commercialization"]),
+            [split_link(r[k], prefixes) for k in ("cbip_link", "spc_link", "leaflet_link",
+                                                    "rma_professional_link", "rma_patient_link", "dhpc_link")],
+        ])
+    supply = {r["cti_extended"]: [r["start_date"], r["expected_end"], text(r["reason"]), text(r["impact"]),
+                                  r["limited_availability"], r["reported_by"], text(r["additional_information"])]
+              for r in db.execute("SELECT * FROM supply_problem")}
+    contexts = {}
+    cnks = [p[0] for p in products]
+    for cnk in cnks:
+        rows = q.reimbursement_contexts(db, cnk)
+        if rows:
+            contexts[cnk] = [[c["chapter"], c["paragraph"], text(c["paragraph_key"]), c["category"],
+                              text(c["criterion"]), c["fee_bim"], c["fee_ordinary"], c["copayment_supplement"]]
+                             for c in rows]
+    data = {"meta": q.meta(db), "text": text.items, "prefixes": prefixes.items,
+            "products": products, "supply": supply, "contexts": contexts}
+    db.close()
+    return data
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--db", type=pathlib.Path, default=pathlib.Path("data/sam.sqlite"))
+    p.add_argument("--out", type=pathlib.Path, default=pathlib.Path("data/medicaments.html"))
+    a = p.parse_args()
+    payload = json.dumps(build(a.db), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    a.out.write_text(TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", payload), encoding="utf-8")
+    print(f"{a.out} ({a.out.stat().st_size / 1e6:.1f} Mo)")
+
+
+if __name__ == "__main__":
+    main()

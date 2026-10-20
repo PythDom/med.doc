@@ -29,6 +29,14 @@ python -m app.server
 
 Relancer `python -m sam_v2.update` pour mettre les données à jour : l'export SAM est régénéré plusieurs fois par jour. La date des données est affichée en haut de chaque page.
 
+### Version autonome (une seule page HTML)
+
+```bash
+python -m app.export_static   # crée data/medicaments.html (≈ 5 Mo), à ouvrir dans un navigateur
+```
+
+Même fonctions que le prototype, sans serveur : les données sont intégrées à la page.
+
 ### Tests
 
 ```bash
