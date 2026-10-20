@@ -86,15 +86,17 @@ h1 { margin: 0 0 4px; font: 600 26px/1.15 var(--display); text-wrap: balance; ov
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-td.num, th.num { text-align: right; } td.num { white-space: nowrap; }
+td.num, th.num { text-align: right; } td.num { white-space: nowrap; } td.num .hint { white-space: normal; margin: 0; }
 td.ctx { min-width: 150px; }
 .crit { color: var(--muted); font-size: 13px; min-width: 160px; }
 .total { font-weight: 600; }
 .hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.hint.lead { margin: -4px 0 14px; }
 .level { margin-top: 18px; } .level:first-of-type { margin-top: 0; }
 .level h3 { margin: 0 0 6px; font: 600 14px var(--body); }
 .level p.why { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
 tr.pick td { background: var(--accent-soft); }
+tr.chosen td { background: var(--accent-soft); }
 tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .picks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .chip.pick { background: var(--accent); color: var(--accent-ink); white-space: normal; border-radius: 6px; line-height: 1.35; padding-block: 3px; }
@@ -197,36 +199,57 @@ function renderResults() {
     <span class="r-sub"><span class="cnk">${p.cnk}</span>${statusChips(p, true)}</span></button></li>`).join("");
 }
 
-function costCell(p) {
-  const costs = contexts(p.cnk).map(c => patientCost(c, regime)).filter(v => v != null);
-  if (!costs.length) return has(p, F.reimb) ? "—" : `${euro(p.price)}<div class="hint">non remboursé</div>`;
-  const lo = Math.min(...costs), hi = Math.max(...costs);
-  return lo === hi ? euro(lo) : `${euro(lo)} – ${euro(hi)}<div class="hint">selon l'indication</div>`;
+/** Indication de comparaison : contexte de remboursement (chapitre + paragraphe) choisi sur la fiche. */
+let ctxKey = null;
+const ctxKeyOf = c => `${c.chapter}-${c.paragraph}`;
+function defaultCtxKey(p) {
+  const cs = contexts(p.cnk), c = cs.find(x => x.chapter === "I") || cs[0];
+  return c ? ctxKeyOf(c) : null;
+}
+/**
+ * Ce que paie réellement le patient : ticket modérateur du régime choisi + supplément si le produit est
+ * remboursé (pour l'indication choisie, sinon le chapitre I), prix public s'il ne l'est pas.
+ */
+function patientCostInfo(x) {
+  const cs = contexts(x.cnk);
+  if (!cs.length) return { value: has(x, F.reimb) ? null : x.price, reimbursed: false, matched: true };
+  const match = ctxKey ? cs.find(c => ctxKeyOf(c) === ctxKey) : null;
+  const c = match || cs.find(c => c.chapter === "I") || cs[0];
+  return { value: patientCost(c, regime), reimbursed: true, matched: !ctxKey || !!match };
+}
+const patientPays = x => patientCostInfo(x).value;
+function costCell(x) {
+  const info = patientCostInfo(x);
+  if (info.value == null) return "—";
+  const note = !info.reimbursed ? "non remboursé" : !info.matched ? "autre indication" : "";
+  return euro(info.value) + (note ? `<div class="hint">${note}</div>` : "");
 }
 
 // BEGIN-PURE : fonctions sans accès à la page, testées par tests/test_app.py (Node.js).
-/** Prix par unité de la boîte (comprimé, gélule, ml, g). */
-function perUnit(x) { return x.price != null && x.qty ? x.price / x.qty : null; }
-/** Prix par mg de substance active (ou par unité de substance quand ce n'est pas une masse). */
-function perSubstance(x) { return x.price != null && x.subst ? x.price / x.subst : null; }
+// `cost(x)` donne ce que paie le patient pour la boîte x (null si inconnu) : jamais le prix public seul.
+/** Coût par unité de la boîte (comprimé, gélule, ml, g). */
+function perUnit(x, cost) { const v = cost(x); return v != null && x.qty ? v / x.qty : null; }
+/** Coût par mg de substance active (ou par unité de substance quand ce n'est pas une masse). */
+function perSubstance(x, cost) { const v = cost(x); return v != null && x.subst ? v / x.subst : null; }
 /** Le moins cher selon une mesure de prix ; null si aucune ligne n'est mesurable. */
 function cheapestBy(rows, measure) {
   let best = null, bestValue = Infinity;
   for (const x of rows) { const v = measure(x); if (v != null && v < bestValue) { best = x; bestValue = v; } }
   return best;
 }
-/** Boîte au contenu le plus proche de celui du produit choisi ; à écart égal, la moins chère. */
-function closestQuantity(src, rows) {
+/** Boîte au contenu le plus proche de celui du produit choisi ; à écart égal, la moins chère pour le patient. */
+function closestQuantity(src, rows, cost) {
   if (src.qty == null) return null;
-  let best = null;
+  let best = null, bestCost = null;
   for (const x of rows) {
-    if (x.qty == null || x.unit !== src.unit || x.price == null) continue;
+    const c = cost(x);
+    if (x.qty == null || x.unit !== src.unit || c == null) continue;
     const gap = Math.abs(x.qty - src.qty), bestGap = best && Math.abs(best.qty - src.qty);
-    if (!best || gap < bestGap || (gap === bestGap && x.price < best.price)) best = x;
+    if (!best || gap < bestGap || (gap === bestGap && c < bestCost)) { best = x; bestCost = c; }
   }
   return best;
 }
-/** Met les lignes mises en évidence en tête, dans l'ordre des étiquettes, puis le reste trié par prix. */
+/** Met les lignes mises en évidence en tête, dans l'ordre des étiquettes, puis le reste dans l'ordre reçu. */
 function withHighlights(rows, picks, limit) {
   const tags = new Map();
   for (const [row, label] of picks) if (row) tags.set(row, [...(tags.get(row) || []), label]);
@@ -236,20 +259,22 @@ function withHighlights(rows, picks, limit) {
 // END-PURE
 
 function alternativeLevels(p) {
+  // Triées par coût pour le patient (inconnu en dernier), puis par prix public.
   const candidates = (list, extra) => (list || []).filter(x => x.cti !== p.cti && available(x) && extra(x))
-    .sort((a, b) => has(b, F.reimb) - has(a, F.reimb) || (a.price ?? 1e9) - (b.price ?? 1e9));
+    .sort((a, b) => (patientPays(a) ?? 1e9) - (patientPays(b) ?? 1e9) || (a.price ?? 1e9) - (b.price ?? 1e9));
   const levels = [];
   if (p.group) {
     const rows = candidates(byGroup.get(p.group), () => true);
     levels.push({ title: "Substituable", why: "Même substance, même dosage, même forme.", metric: "unit",
-      ...withHighlights(rows, [[closestQuantity(p, rows), "Quantité la plus proche, la moins chère"],
-                               [cheapestBy(rows, perUnit), "La moins chère par unité"]], 25) });
+      ...withHighlights(rows, [[closestQuantity(p, rows, patientPays), "Quantité la plus proche, la moins chère pour le patient"],
+                               [cheapestBy(rows, x => perUnit(x, patientPays)), "La moins chère par unité pour le patient"]], 25) });
   }
   if (p.vtm) {
     const rows = candidates(byVtm.get(p.vtm), x => x.group !== p.group);
     const unit = p.substUnit || "mg", comparable = rows.filter(x => x.substUnit === unit);
     levels.push({ title: "Même substance, autre dosage ou forme", why: "La posologie doit être adaptée.", metric: "substance", substUnit: unit,
-      ...withHighlights(rows, [[cheapestBy(comparable, perSubstance), unit === "mg" ? "La moins chère par gramme de substance" : "La moins chère par unité de substance"]], 25) });
+      ...withHighlights(rows, [[cheapestBy(comparable, x => perSubstance(x, patientPays)),
+        unit === "mg" ? "La moins chère par gramme de substance pour le patient" : "La moins chère par unité de substance pour le patient"]], 25) });
   }
   if (p.atc && p.atc.length >= 5) {
     const rows = candidates(byAtc5.get(p.atc.slice(0, 5)), x => x.vtm !== p.vtm);
@@ -264,8 +289,8 @@ const substLabel = x => (x.subst == null ? null : x.substUnit === "mg"
   ? (x.subst >= 1000 ? `${(x.subst / 1000).toLocaleString("fr-BE", { maximumFractionDigits: 2 })} g` : `${x.subst.toLocaleString("fr-BE", { maximumFractionDigits: 1 })} mg`)
   : `${x.subst.toLocaleString("fr-BE", { maximumFractionDigits: 1 })} ${x.substUnit}`);
 function metricCell(x, level) {
-  if (level.metric === "unit") { const v = perUnit(x); return v == null ? "—" : `${euro(v)}<span class="per"> / ${x.unit || "unité"}</span>`; }
-  const v = perSubstance(x);
+  if (level.metric === "unit") { const v = perUnit(x, patientPays); return v == null ? "—" : `${euro(v)}<span class="per"> / ${x.unit || "unité"}</span>`; }
+  const v = perSubstance(x, patientPays);
   if (v == null || x.substUnit !== level.substUnit) return "—";
   return level.substUnit === "mg" ? `${euro(v * 1000)}<span class="per"> / g</span>` : `${euro(v)}<span class="per"> / ${esc(x.substUnit)}</span>`;
 }
@@ -281,19 +306,21 @@ function renderDetail(p) {
     <dt>Signalé par</dt><dd>${s[5] === "FAMHP" ? "AFMPS" : "Firme"}</dd></dl></div>`;
   else if (!has(p, F.marketed)) alert = `<div class="panel card alert"><h2>${esc(p.endComm || "Non commercialisé actuellement")}</h2></div>`;
 
-  const ctxRows = ctx.map(c => `<tr>
+  const choose = ctx.length > 1;
+  const ctxRows = ctx.map(c => `<tr${ctxKeyOf(c) === ctxKey ? ' class="chosen"' : ""}>
+    ${choose ? `<td><input type="radio" name="ctx" value="${esc(ctxKeyOf(c))}"${ctxKeyOf(c) === ctxKey ? " checked" : ""} aria-label="Comparer les alternatives pour cette indication"></td>` : ""}
     <td class="ctx">Chapitre ${esc(c.chapter)}${c.paragraph && c.paragraph !== "0" ? `<div class="hint">§ ${esc(c.paragraph)}${c.paragraphKey ? " · " + esc(c.paragraphKey) : ""}</div>` : ""}</td>
     <td><span class="chip cat">${esc(c.category)}</span></td><td class="crit">${esc((c.criterion || "").slice(0, 180))}</td>
     <td class="num">${euro(c.bim)}</td><td class="num">${euro(c.ordinary)}</td>
     <td class="num">${c.supplement ? euro(c.supplement) : "—"}</td><td class="num total">${euro(patientCost(c, regime))}</td></tr>`).join("");
-  const cost = ctx.length ? `<div class="wrap"><table><thead><tr><th>Contexte</th><th>Cat.</th><th>Critère</th>
+  const cost = ctx.length ? `<div class="wrap"><table><thead><tr>${choose ? "<th>Comparer</th>" : ""}<th>Contexte</th><th>Cat.</th><th>Critère</th>
       <th class="num">Ticket BIM</th><th class="num">Ticket ordinaire</th><th class="num">Supplément</th><th class="num">Patient ${label}</th></tr></thead>
       <tbody>${ctxRows}</tbody></table></div>
-      <p class="hint">Coût patient = ticket modérateur du régime choisi + supplément éventuel (système de remboursement de référence).</p>`
+      <p class="hint">Coût patient = ticket modérateur du régime choisi + supplément éventuel (système de remboursement de référence).${choose ? " Les alternatives sont comparées pour l'indication cochée." : ""}</p>`
     : `<p>Non remboursé : le patient paie le prix public, soit <strong class="num">${euro(p.price)}</strong>.</p>`;
 
   const levels = alternativeLevels(p).map(level => {
-    const metricHead = level.metric === "unit" ? "Prix / unité" : level.metric === "substance" ? (level.substUnit === "mg" ? "Prix / g de substance" : "Prix / unité de substance") : null;
+    const metricHead = level.metric === "unit" ? "Patient / unité" : level.metric === "substance" ? (level.substUnit === "mg" ? "Patient / g de substance" : "Patient / unité de substance") : null;
     const rows = level.rows.map(x => {
       const tags = level.tags.get(x) || [];
       return `<tr${tags.length ? ' class="pick"' : ""}><td><button type="button" class="linkbtn" data-cnk="${x.cnk}">${esc(x.name)}</button>
@@ -319,7 +346,8 @@ function renderDetail(p) {
       <div class="links">${p.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join("") || '<span class="hint">Aucun lien officiel</span>'}</div>
     </article>
     <section class="panel card"><h2>Remboursement et coût pour le patient</h2>${cost}</section>
-    <section class="panel card"><h2>Alternatives disponibles</h2>${levels || '<p class="hint">Pas de groupe ni de classe ATC connus pour ce produit.</p>'}
+    <section class="panel card"><h2>Alternatives disponibles</h2>
+      <p class="hint lead">Classées selon ce que paie le patient ${label} : ticket modérateur et supplément si le produit est remboursé, prix public sinon.</p>${levels || '<p class="hint">Pas de groupe ni de classe ATC connus pour ce produit.</p>'}
       <p class="hint">Seuls les conditionnements commercialisés, autorisés et sans rupture en cours sont proposés. Toute substitution reste une décision clinique.</p></section>`;
   document.querySelectorAll("#results button[data-cnk]").forEach(b => b.setAttribute("aria-current", String(b.dataset.cnk === p.cnk)));
 }
@@ -327,6 +355,7 @@ function renderDetail(p) {
 function show(cnk, scroll) {
   const p = byCnk.get(cnk);
   if (!p) return;
+  ctxKey = defaultCtxKey(p);
   renderDetail(p);
   try { history.replaceState(null, "", "#p" + cnk); } catch (e) {}
   if (scroll && window.matchMedia("(max-width: 860px)").matches) document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -344,6 +373,7 @@ document.getElementById("q").addEventListener("input", () => { clearTimeout(time
 document.getElementById("search-form").addEventListener("submit", e => { e.preventDefault(); renderResults(); const first = document.querySelector("#results button[data-cnk]"); if (first) show(first.dataset.cnk, true); });
 document.getElementById("only-shortage").addEventListener("change", renderResults);
 document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setRegime(b.dataset.regime)));
+document.addEventListener("change", e => { if (e.target.name === "ctx" && current) { ctxKey = e.target.value; renderDetail(current); } });
 document.addEventListener("click", e => { const b = e.target.closest("button[data-cnk]"); if (b) show(b.dataset.cnk, true); });
 
 const m = DATA.meta, shortages = Object.keys(DATA.supply).length;

@@ -102,7 +102,8 @@ def build(db_path):
             LEFT JOIN vtm vt ON vt.vtm_code = v.vtm_code
             WHERE d.delivery_environment = '{q.PUBLIC}' ORDER BY p.prescription_name"""):
         products.append([
-            r["cnk"], r["prescription_name"], r["cti_extended"], r["price"],
+            # Un prix public de 0 € signifie « prix non communiqué » (produits non remboursés), pas « gratuit ».
+            r["cnk"], r["prescription_name"], r["cti_extended"], r["price"] or None,
             (r["cheap"] or 0) | (r["cheapest"] or 0) << 1 | (r["reimbursable"] or 0) << 2
             | (r["commercialized"] or 0) << 3 | (r["black_triangle"] or 0) << 4
             | (r["generic_prescription_required"] or 0) << 5 | (r["status"] == "AUTHORIZED") << 6,

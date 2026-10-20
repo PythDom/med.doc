@@ -10,9 +10,9 @@ Documentation et outils autour des sources d'information médicamenteuse (usage 
 
 Application web locale qui combine, à partir de l'export public SAM v2 :
 - **recherche unifiée** par nom, substance ou CNK : disponibilité, prix, remboursement, liens vers la fiche CBIP, le RCP, la notice, les documents RMA et les DHPC ;
-- **assistant rupture de stock** : détail de la rupture et alternatives disponibles (même groupe substituable, même substance sous un autre dosage ou une autre forme, même classe ATC). Sont mises en évidence en tête de liste :
-  - parmi les substituables, la boîte au **contenu le plus proche** du produit choisi (à écart égal, la moins chère) et la **moins chère par unité** ;
-  - parmi les autres dosages ou formes (posologie à adapter), la **moins chère par gramme de substance active** ;
+- **assistant rupture de stock** : détail de la rupture et alternatives disponibles (même groupe substituable, même substance sous un autre dosage ou une autre forme, même classe ATC). Les alternatives sont classées selon **ce que paie le patient** (ticket modérateur du régime BIM ou ordinaire et supplément éventuel pour l'indication choisie, prix public si le produit n'est pas remboursé), jamais selon le prix public seul. Sont mises en évidence en tête de liste :
+  - parmi les substituables, la boîte au **contenu le plus proche** du produit choisi (à écart égal, la moins chère pour le patient) et la **moins chère par unité pour le patient** ;
+  - parmi les autres dosages ou formes (posologie à adapter), la **moins chère par gramme de substance active pour le patient** ;
 - **comparateur de coût** : ticket modérateur BIM ou ordinaire par contexte de remboursement (chapitre, paragraphe du Chapitre IV), supplément éventuel, indicateurs INAMI « bon marché » et « le moins cher ».
 
 Aucune donnée patient n'est utilisée. Le serveur n'écoute que sur la machine locale.

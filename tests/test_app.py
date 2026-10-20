@@ -47,7 +47,7 @@ AMP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
       <PrescriptionNameFamhp><Fr>Gabapentine B 400 mg gél. 30 (retiré)</Fr></PrescriptionNameFamhp>
       <Status>AUTHORIZED</Status></Data>
       <Commercialization><Data from="2020-01-01" to="2024-01-01"/></Commercialization>
-      <Dmpp code="1000003" deliveryEnvironment="P"><Data from="2020-01-01"><Price>9.00</Price></Data></Dmpp>
+      <Dmpp code="1000003" deliveryEnvironment="P"><Data from="2020-01-01"><Price>0.0000</Price></Data></Dmpp>
     </Ampp>
   </Amp>
 </ExportActualMedicines>"""
@@ -131,6 +131,7 @@ class AppTest(unittest.TestCase):
         flags = products["1000001"][4]
         self.assertTrue(flags & 1 and flags & 8 and flags & 64)  # bon marché, commercialisé, autorisé
         self.assertFalse(products["1000003"][4] & 8)  # retiré du marché
+        self.assertIsNone(products["1000003"][3])  # prix 0 € = prix inconnu, pas gratuit
         self.assertIn("1-01", data["supply"])
         self.assertEqual(len(data["contexts"]["1000002"]), 2)
         prefix, suffix = products["1000001"][14][0]  # lien CBIP
@@ -153,20 +154,28 @@ class AppTest(unittest.TestCase):
         template = export_static.TEMPLATE.read_text(encoding="utf-8")
         pure = template.split("// BEGIN-PURE")[1].split("\n", 1)[1].split("// END-PURE")[0]
         script = pure + """
-const src = { qty: 90, unit: "", price: 25.25 };
-const a = { name: "a", qty: 100, unit: "", price: 23.52, subst: 40000 };
-const b = { name: "b", qty: 90, unit: "", price: 25.08, subst: 36000 };
-const c = { name: "c", qty: 90, unit: "", price: 25.25, subst: 36000 };
-const d = { name: "d", qty: 200, unit: "", price: 46.14, subst: 80000 };
-const e = { name: "e", qty: 90, unit: "ml", price: 1 };
-const rows = [a, b, c, d, e];
-const h = withHighlights([a, b, c, d], [[closestQuantity(src, rows), "proche"], [cheapestBy([a, b, c, d], perUnit), "unité"]], 2);
+// cost = ce que paie le patient ; price = prix public.
+const cost = x => x.cost;
+const src = { qty: 90, unit: "" };
+const a = { name: "a", qty: 100, unit: "", price: 23.52, cost: 6.04, subst: 40000 };
+const b = { name: "b", qty: 90, unit: "", price: 25.08, cost: 6.56, subst: 36000 };
+const c = { name: "c", qty: 90, unit: "", price: 25.25, cost: 6.60, subst: 36000 };
+const d = { name: "d", qty: 200, unit: "", price: 46.14, cost: 11.51, subst: 80000 };
+const n = { name: "n", qty: 90, unit: "", price: 15.00, cost: 15.00, subst: 36000 };  // non remboursé
+const u = { name: "u", qty: 90, unit: "", price: 9.00, cost: null };                // coût inconnu
+const e = { name: "e", qty: 90, unit: "ml", price: 1, cost: 1 };
+const rows = [a, b, c, d, n, u, e];
+const h = withHighlights([a, b, c, d], [[closestQuantity(src, rows, cost), "proche"], [cheapestBy([a, b, c, d], x => perUnit(x, cost)), "unité"]], 2);
 console.log(JSON.stringify({
-  closest: closestQuantity(src, rows).name, perUnit: cheapestBy([a, b, c, d], perUnit).name,
-  perSubstance: cheapestBy(rows, perSubstance).name, none: closestQuantity({ qty: null }, rows),
+  closest: closestQuantity(src, rows, cost).name,
+  perUnit: cheapestBy([a, b, c, d, n, u], x => perUnit(x, cost)).name,
+  perSubstance: cheapestBy(rows, x => perSubstance(x, cost)).name,
+  none: closestQuantity({ qty: null }, rows, cost),
   order: h.rows.map(x => x.name), tags: [...h.tags.values()] }));
 """
         out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout
+        # Le non remboursé n (15 €, prix public le plus bas parmi les boîtes de 90) n'est jamais retenu :
+        # le patient paie 15 € contre 6,56 € pour b.
         self.assertEqual(json.loads(out), {"closest": "b", "perUnit": "d", "perSubstance": "d", "none": None,
                                            "order": ["b", "d"], "tags": [["proche"], ["unité"]]})
 
