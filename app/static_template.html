@@ -38,6 +38,7 @@ header.top { background: var(--surface); border-bottom: 1px solid var(--line); p
 .top-inner { max-width: 1240px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 .brand { display: flex; align-items: center; gap: 8px; font: 600 19px/1 var(--display); letter-spacing: .01em; }
 .cross { width: 22px; height: 22px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border-radius: 4px; font: 700 16px/1 var(--body); }
+.dash-link { font-weight: 600; font-size: 14px; text-decoration: none; }
 .searchbox { flex: 1 1 320px; display: flex; gap: 8px; min-width: 0; }
 .searchbox input[type=search] { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: 15px var(--body); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -115,6 +116,7 @@ tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 
 <header class="top"><div class="top-inner gutter">
   <div class="brand"><span class="cross" aria-hidden="true">+</span>Officine SAM</div>
+  <a class="dash-link" id="dash-link" href="/tableau-de-bord" hidden>Tableau de bord</a>
   <form class="searchbox" id="search-form" role="search">
     <input type="search" id="q" placeholder="Nom, substance ou CNK…" aria-label="Rechercher un médicament" autocomplete="off">
   </form>
@@ -280,7 +282,7 @@ function alternativeLevels(p) {
   const levels = [];
   if (p.group) {
     const rows = candidates(byGroup.get(p.group), () => true);
-    levels.push({ title: "Substituable", why: "Même substance, même dosage, même forme.", metric: "unit",
+    levels.push({ title: "Substituable", why: "Même substance, même dosage, même voie d'administration. La forme peut différer (comprimé, gélule, sachet…) : à vérifier.", metric: "unit",
       ...withHighlights(rows, [[closestQuantity(p, rows, patientPays), "Quantité la plus proche, la moins chère pour le patient"],
                                [cheapestBy(rows, x => perUnit(x, patientPays)), "La moins chère par unité pour le patient"]], 25) });
   }
@@ -451,6 +453,8 @@ const m = DATA.meta, shortages = Object.keys(DATA.supply).length;
 document.getElementById("notice").textContent =
   `Export SAM v2 ${m.export || ""} du ${date(m.reference_date)}${m.cbip_version ? ` · CBIP ${m.cbip_version}` : ""} · ${products.length.toLocaleString("fr-BE")} conditionnements en officine · ${shortages} ruptures en cours. Version de démonstration : aide à la recherche, pas à la décision.`;
 
+// Le tableau de bord n'existe que sur le prototype local (python -m app.server).
+if (["localhost", "127.0.0.1"].includes(location.hostname)) document.getElementById("dash-link").hidden = false;
 const fromHash = /^#p(\d{7})$/.exec(location.hash);
 document.getElementById("q").value = "gabapentine 400";
 setRegime(regime);

@@ -11,7 +11,7 @@
 |---|---|---|
 | Ruptures de stock (données PharmaStatus) | ✅ **Oui** : début, fin prévue, motif, impact, disponibilité limitée | `AMP › Ampp › SupplyProblem` |
 | Arrêts de commercialisation (temporaires ou définitifs) | ✅ Oui | `AMP › Ampp › Commercialization` |
-| Groupes de médicaments substituables (même substance, même dosage, même forme) | ✅ Oui | `VMP › Vmp / VmpGroup / Vtm` |
+| Groupes de médicaments substituables (même substance, même dosage, même voie ; la forme peut différer) | ✅ Oui | `VMP › Vmp / VmpGroup / Vtm` |
 | Prix public | ✅ Oui | `AMP › Ampp › Dmpp › Price` |
 | Indicateurs « bon marché » et « le moins cher » | ✅ Oui | `Dmpp › Cheap / Cheapest` |
 | Ticket modérateur, BIM et non-BIM | ✅ Oui, **par contexte de remboursement** | `RMB › ReimbursementContext › Copayment` |

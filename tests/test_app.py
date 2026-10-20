@@ -252,6 +252,10 @@ console.log(JSON.stringify({
             response, _ = get("/produit/1000001")
             self.assertEqual((response.status, response.getheader("Location")), (302, "/#p1000001"))
             self.assertEqual(get("/inconnu")[0].status, 404)
+            self.assertEqual(get("/tableau-de-bord")[0].status, 404)  # pas encore construit
+            self.db_path.with_name("tableau-de-bord.html").write_text("<p>tableau</p>", encoding="utf-8")
+            response, body = get("/tableau-de-bord")
+            self.assertEqual((response.status, body), (200, "<p>tableau</p>"))
         finally:
             httpd.shutdown()
             httpd.server_close()

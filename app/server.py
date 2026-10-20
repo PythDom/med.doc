@@ -40,6 +40,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
             path = urllib.parse.urlsplit(self.path).path
             if path == "/":
                 self.respond(200, self.cache.get())
+            elif path == "/tableau-de-bord":
+                dashboard = self.cache.db_path.with_name("tableau-de-bord.html")
+                if dashboard.exists():
+                    self.respond(200, dashboard.read_bytes())
+                else:
+                    self.respond(404, ("Pas encore de tableau de bord. Créez-le avec : python -m dashboard.build "
+                                       "<export Medispring>").encode("utf-8"), "text/plain")
             elif path.startswith("/produit/"):
                 # Anciennes adresses de la version serveur : la fiche s'ouvre désormais via l'ancre #p<CNK>.
                 self.send_response(302)
