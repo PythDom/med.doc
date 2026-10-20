@@ -81,10 +81,29 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--db", type=pathlib.Path, default=pathlib.Path("data/sam.sqlite"))
     p.add_argument("--out", type=pathlib.Path, default=pathlib.Path("data/medicaments.html"))
+    p.add_argument("--fragment", action="store_true", help="sans squelette HTML (publication sur claude.ai)")
     a = p.parse_args()
-    payload = json.dumps(build(a.db), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    a.out.write_text(TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", payload), encoding="utf-8")
+    a.out.write_text(render(a.db, standalone=not a.fragment), encoding="utf-8")
     print(f"{a.out} ({a.out.stat().st_size / 1e6:.1f} Mo)")
+
+
+# Squelette minimal pour ouvrir la page hors de claude.ai (navigateur ou serveur local).
+SKELETON = """<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head><body>
+{content}
+</body></html>
+"""
+
+
+def render(db_path, standalone=True):
+    """Page complète avec les données intégrées ; `standalone=False` donne le fragment publié sur claude.ai."""
+    payload = json.dumps(build(db_path), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    content = TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", payload)
+    return SKELETON.replace("{content}", content) if standalone else content
 
 
 if __name__ == "__main__":

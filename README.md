@@ -29,13 +29,15 @@ python -m app.server
 
 Relancer `python -m sam_v2.update` pour mettre les données à jour : l'export SAM est régénéré plusieurs fois par jour. La date des données est affichée en haut de chaque page.
 
-### Version autonome (une seule page HTML)
+Le serveur sert une page unique (`app/static_template.html`) dans laquelle les données de la base sont intégrées : la recherche, les alternatives et le coût patient sont calculés dans le navigateur. La page est reconstruite automatiquement après chaque mise à jour de la base.
+
+### Version autonome (un seul fichier HTML, sans serveur)
 
 ```bash
 python -m app.export_static   # crée data/medicaments.html (≈ 5 Mo), à ouvrir dans un navigateur
 ```
 
-Même fonctions que le prototype, sans serveur : les données sont intégrées à la page.
+C'est exactement la même page que celle du serveur, enregistrée dans un fichier.
 
 ### Tests
 

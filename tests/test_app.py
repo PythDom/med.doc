@@ -1,11 +1,16 @@
-"""Tests du chargeur SAM v2 et des requêtes du prototype, sur un mini-export synthétique."""
+"""Tests du chargeur SAM v2, de l'export de la page et du serveur local, sur un mini-export synthétique."""
+import http.client
+import http.server
+import json
 import pathlib
+import re
 import sqlite3
 import tempfile
+import threading
 import unittest
 
+from app import export_static, server
 from app import queries as q
-from app import server
 from sam_v2 import load
 
 NS = 'xmlns="urn:x"'
@@ -103,38 +108,57 @@ class AppTest(unittest.TestCase):
         self.assertEqual(raw.execute("SELECT count(*) FROM supply_problem").fetchone()[0], 1)
         raw.close()
 
-    def test_search_by_name_ignores_accents_and_case(self):
-        self.assertEqual({r["cnk"] for r in q.search(self.db, "GABAPENTINE 400")}, {"1000001", "1000002", "1000003"})
-        self.assertEqual(len(q.search(self.db, "gabapentine épilepsie")), 0)
-
-    def test_search_by_cnk(self):
-        rows = q.search(self.db, "1000001")
-        self.assertEqual([r["cnk"] for r in rows], ["1000001"])
-        self.assertTrue(rows[0]["supply_problem"])
-
-    def test_alternatives_exclude_shortages_and_withdrawn_packs(self):
-        prod = q.product(self.db, "1000001")
-        same_group = q.alternatives(self.db, prod)[0][1]
-        self.assertEqual([r["cnk"] for r in same_group], ["1000002"])
-
-    def test_reimbursement_contexts_and_patient_cost(self):
+    def test_reimbursement_contexts(self):
         contexts = {c["chapter"]: c for c in q.reimbursement_contexts(self.db, "1000002")}
         self.assertEqual(contexts["IV"]["paragraph_key"], "crises d'épilepsie partielles")
-        self.assertAlmostEqual(q.patient_cost(contexts["I"], "1"), 4.13)  # ticket BIM + supplément
-        self.assertAlmostEqual(q.patient_cost(contexts["IV"], "2"), 2.00)
+        self.assertEqual((contexts["I"]["fee_bim"], contexts["I"]["fee_ordinary"]), (3.63, 6.04))
+        self.assertEqual(contexts["I"]["copayment_supplement"], 0.5)
 
     def test_split_legal_path(self):
         self.assertEqual(q.split_legal_path("RD20180201-IV-1640000"), ("IV", "1640000"))
         self.assertEqual(q.split_legal_path(None), ("", ""))
 
-    def test_product_page_renders(self):
-        title, body = server.render_product(self.db, "1000001", "1")
-        self.assertEqual(title, "Gabapentine A 400 mg gél. 90")
-        self.assertIn("Problème d'approvisionnement", body)
-        self.assertIn("Gabapentine B 400 mg gél. 100", body)
-        self.assertNotIn("(retiré)", body)
-        self.assertIn("Prescription médicale", body)
-        self.assertIsNone(server.render_product(self.db, "9999999", "1")[0])
+    def test_export_data(self):
+        data = export_static.build(self.db_path)
+        products = {p[0]: p for p in data["products"]}
+        self.assertEqual(set(products), {"1000001", "1000002", "1000003"})
+        flags = products["1000001"][4]
+        self.assertTrue(flags & 1 and flags & 8 and flags & 64)  # bon marché, commercialisé, autorisé
+        self.assertFalse(products["1000003"][4] & 8)  # retiré du marché
+        self.assertIn("1-01", data["supply"])
+        self.assertEqual(len(data["contexts"]["1000002"]), 2)
+        prefix, suffix = products["1000001"][14][0]  # lien CBIP
+        self.assertEqual(data["prefixes"][prefix] + suffix, "http://cbip/a")
+
+    def test_render_standalone_page(self):
+        page = export_static.render(self.db_path)
+        self.assertTrue(page.startswith("<!doctype html>"))
+        self.assertNotIn("/*__DATA__*/", page)
+        payload = re.search(r"const DATA = (.*?);\nconst T =", page, re.S).group(1)
+        self.assertEqual(json.loads(payload)["meta"]["export"], "sam-test")
+        self.assertFalse(export_static.render(self.db_path, standalone=False).startswith("<!doctype"))
+
+    def test_server_routes(self):
+        server.Handler.cache = server.PageCache(self.db_path)
+        httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        try:
+            def get(path):
+                conn = http.client.HTTPConnection("127.0.0.1", httpd.server_address[1], timeout=10)
+                conn.request("GET", path)
+                response = conn.getresponse()
+                body = response.read().decode("utf-8")
+                conn.close()
+                return response, body
+            response, body = get("/")
+            self.assertEqual(response.status, 200)
+            self.assertIn("Officine SAM", body)
+            response, _ = get("/produit/1000001")
+            self.assertEqual((response.status, response.getheader("Location")), (302, "/#p1000001"))
+            self.assertEqual(get("/inconnu")[0].status, 404)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
 
 
 if __name__ == "__main__":
