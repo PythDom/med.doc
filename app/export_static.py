@@ -47,6 +47,43 @@ def mono_strengths(db):
             for r in rows if r["amount"] is not None and r["denominator"]}
 
 
+def substance_keys(db):
+    """Combinaison de substances actives de chaque VMP, sous forme de clé stable : {vmp_code: '3960+4012'}."""
+    keys = {}
+    for r in db.execute("SELECT vmp_code, group_concat(substance_code) AS codes FROM "
+                        "(SELECT DISTINCT vmp_code, substance_code FROM vmp_ingredient ORDER BY substance_code) "
+                        "GROUP BY vmp_code"):
+        keys[r["vmp_code"]] = "+".join(sorted(r["codes"].split(",")))
+    return keys
+
+
+def has_table(db, name):
+    return db.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (name,)).fetchone() is not None
+
+
+def cbip_content(db, text):
+    """Lien CNK -> chapitre du Répertoire, et chapitres utiles (avec leurs parents) : titre, texte, posologie."""
+    if not has_table(db, "cbip_product"):
+        return {}, {}
+    products = {r["cnk"]: [r["chapter_code"], text(r["posology"]), text(r["note"])]
+                for r in db.execute("SELECT * FROM cbip_product")}
+    needed = {code[:i] for code, _, _ in products.values() if code for i in range(1, len(code) + 1)}
+    chapters = {r["chapter_code"]: [r["title"], text(r["intro"]), text(r["posology"])]
+                for r in db.execute("SELECT * FROM cbip_chapter") if r["chapter_code"] in needed}
+    return products, chapters
+
+
+def imported_medicines(db):
+    """Médicaments importés temporairement, avec la même clé de substances que les produits belges."""
+    rows = []
+    for r in db.execute("""SELECT i.*, group_concat(s.substance_code) AS codes FROM imported i
+                           JOIN imported_substance s ON s.imported_id = i.imported_id GROUP BY i.imported_id
+                           ORDER BY i.name"""):
+        rows.append([r["name"], r["country"], r["strength"], r["pack_size"], r["cnk"], r["form"], r["route"],
+                     r["notes"], r["start_date"], "+".join(sorted(set(r["codes"].split(","))))])
+    return rows
+
+
 def pack_and_substance(pack, strength):
     """[quantité de la boîte, unité, quantité totale de substance active, unité] pour comparer les prix.
 
@@ -92,7 +129,7 @@ def split_link(url, prefixes):
 def build(db_path):
     db = q.connect(db_path)
     text, prefixes = Table(), Table()
-    strengths = mono_strengths(db)
+    strengths, skeys = mono_strengths(db), substance_keys(db)
     products = []
     for r in db.execute(f"""
             SELECT d.cnk, d.price, d.cheap, d.cheapest, d.reimbursable, p.*, a.black_triangle, a.company,
@@ -112,7 +149,7 @@ def build(db_path):
             text(r["end_of_commercialization"]),
             [split_link(r[k], prefixes) for k in ("cbip_link", "spc_link", "leaflet_link",
                                                     "rma_professional_link", "rma_patient_link", "dhpc_link")],
-        ] + pack_and_substance(r["pack"], strengths.get(r["vmp_code"])))
+        ] + pack_and_substance(r["pack"], strengths.get(r["vmp_code"])) + [skeys.get(r["vmp_code"])])
     supply = {r["cti_extended"]: [r["start_date"], r["expected_end"], text(r["reason"]), text(r["impact"]),
                                   r["limited_availability"], r["reported_by"], text(r["additional_information"])]
               for r in db.execute("SELECT * FROM supply_problem")}
@@ -124,8 +161,12 @@ def build(db_path):
             contexts[cnk] = [[c["chapter"], c["paragraph"], text(c["paragraph_key"]), c["category"],
                               text(c["criterion"]), c["fee_bim"], c["fee_ordinary"], c["copayment_supplement"]]
                              for c in rows]
+    cbip_products, cbip_chapters = cbip_content(db, text)
+    exported = {p[0] for p in products}
     data = {"meta": q.meta(db), "text": text.items, "prefixes": prefixes.items,
-            "products": products, "supply": supply, "contexts": contexts}
+            "cbip": {"products": {cnk: v for cnk, v in cbip_products.items() if cnk in exported},
+                     "chapters": cbip_chapters},
+            "products": products, "supply": supply, "contexts": contexts, "imported": imported_medicines(db)}
     db.close()
     return data
 

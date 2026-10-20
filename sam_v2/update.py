@@ -1,4 +1,4 @@
-"""Mise à jour en une commande : télécharge le dernier export SAM v2 et recharge la base SQLite.
+"""Mise à jour en une commande : télécharge le dernier export SAM v2 et la base du CBIP, puis recharge la base SQLite.
 
 Usage : python -m sam_v2.update [--data data]
 Les anciennes versions de l'export sont supprimées pour libérer l'espace disque (≈ 2,7 Go par version).
@@ -8,6 +8,7 @@ import datetime as dt
 import pathlib
 import shutil
 
+from cbip import load as cbip_load
 from sam_v2 import download, load
 
 
@@ -18,6 +19,10 @@ def update(data: pathlib.Path):
             shutil.rmtree(old)
     tmp = data / "sam.sqlite.tmp"
     load.load(xml_dir, tmp, dt.date.today().isoformat())
+    try:
+        cbip_load.load(tmp)
+    except Exception as error:  # la base reste utilisable sans le contenu du CBIP
+        print(f"Base du CBIP non chargée ({error}) : la page s'affichera sans le texte du Répertoire.")
     tmp.replace(data / "sam.sqlite")
     print(f"Base à jour : {data / 'sam.sqlite'}")
 
