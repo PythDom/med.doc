@@ -87,7 +87,7 @@ def reimbursement_contexts(db, cnk):
             found = db.execute("SELECT key_string FROM chapter_iv_paragraph WHERE chapter = ? AND paragraph = ?",
                                (chapter, paragraph)).fetchone()
             key = found["key_string"] if found else None
-        contexts.append(dict(r) | {"chapter": chapter, "paragraph": paragraph, "paragraph_key": key})
+        contexts.append({**dict(r), "chapter": chapter, "paragraph": paragraph, "paragraph_key": key})
     return contexts
 
 
@@ -117,7 +117,7 @@ def _alternatives(db, join_condition, args, exclude_cti, limit):
           AND NOT EXISTS (SELECT 1 FROM supply_problem s WHERE s.cti_extended = p.cti_extended)
         ORDER BY d.reimbursable DESC, d.price IS NULL, d.price
         LIMIT ?""", args + [exclude_cti, limit]).fetchall()
-    return [dict(r) | {"contexts": reimbursement_contexts(db, r["cnk"])} for r in rows]
+    return [{**dict(r), "contexts": reimbursement_contexts(db, r["cnk"])} for r in rows]
 
 
 def alternatives(db, prod, limit=25):

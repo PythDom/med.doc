@@ -7,6 +7,7 @@ import argparse
 import html
 import http.server
 import pathlib
+import traceback
 import urllib.parse
 
 from app import queries as q
@@ -184,6 +185,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.db = q.connect(self.db_path)
         try:
             self.route()
+        except Exception:
+            # Afficher l'erreur plutôt que de fermer la connexion sans réponse.
+            traceback.print_exc()
+            self.respond(500, page("Erreur", '<div class="card"><h2>Erreur interne</h2><p>La page n\'a pas pu être '
+                                   'générée. Le détail de l\'erreur est affiché dans le terminal du serveur.</p></div>'))
         finally:
             self.db.close()
 

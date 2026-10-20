@@ -17,7 +17,7 @@ Aucune donnée patient n'est utilisée. Le serveur n'écoute que sur la machine 
 
 ### Installation
 
-Python 3.10 ou plus récent, sans bibliothèque supplémentaire. Prévoir environ 3 Go d'espace disque.
+Python 3.8 ou plus récent, sans bibliothèque supplémentaire. Prévoir environ 3 Go d'espace disque.
 
 ```bash
 # 1. Télécharger le dernier export et construire la base (≈ 3 minutes)
