@@ -56,7 +56,7 @@ Chaque entité est **historisée** par des blocs `<Data from=… to=…>`. Le ch
 | VMP / groupes VMP / substances (VTM) | 4 035 / 3 726 / 1 524 |
 | Paragraphes Chapitre IV et autres | 1 358 |
 
-Circuits de délivrance (`deliveryEnvironment`) : `P` officine publique, `H` hôpital, `A` et `R` autres circuits (signification à confirmer dans la documentation SAM).
+Circuits de délivrance (`deliveryEnvironment`) : `P` officine publique, `A` ambulatoire, `H` hôpital, `R` maison de repos et de soins.
 
 ## 3. Vérification sur les cas d'usage
 
@@ -99,7 +99,7 @@ Ce résultat est directement exploitable. Il suffit d'une requête SQL : voir la
 
 ### 3.2 Comparateur de coût
 
-**Ticket modérateur.** Il existe deux régimes (`regimeType` 1 et 2). Dans **100 % des 13 575 paires comparées**, le régime 1 coûte moins cher ou autant que le régime 2. Le régime 1 correspond donc au tarif **BIM** (intervention majorée) et le régime 2 au tarif **ordinaire**. C'est une déduction cohérente, à confirmer dans la documentation SAM.
+**Ticket modérateur.** Il existe deux régimes (`regimeType` 1 et 2). Dans **100 % des 13 575 paires comparées**, le régime 1 coûte moins cher ou autant que le régime 2. La documentation officielle le confirme : le régime 1 est le régime **préférentiel (BIM)** et le régime 2 le régime **ordinaire** (section 4).
 
 **Point essentiel : le ticket modérateur dépend du contexte de remboursement**, donc de l'indication. 1 264 CNK en officine ont plusieurs contextes. Exemple avec la gabapentine Sandoz 400 mg (CNK 2215705) :
 
@@ -111,11 +111,11 @@ Ce résultat est directement exploitable. Il suffit d'une requête SQL : voir la
 → Le comparateur doit demander **le statut BIM** et, quand plusieurs contextes existent, **l'indication ou le paragraphe** concerné.
 
 **Bon marché.** En officine, parmi les CNK remboursables : 3 529 sont « bon marché » et « le moins cher », 257 « bon marché » seulement, 967 « le moins cher » seulement, 511 ni l'un ni l'autre.
-- `Cheap` correspond très probablement à la notion INAMI de **prescription bon marché** (quota de 60 % pour les généralistes).
-- `Cheapest` correspond à la notion de **médicament le moins cher** de son groupe.
+- `Cheap` : produit considéré par l'INAMI comme **bon marché**, la qualification utilisée pour le quota de prescription bon marché (60 % pour les généralistes).
+- `Cheapest` : produit considéré par l'INAMI comme **le moins cher du marché**.
 - Les 12 169 CNK non remboursables n'ont pas ces indicateurs.
 
-Ces correspondances sont des déductions à confirmer dans la documentation SAM. Elles conditionnent le futur tableau de bord.
+Définitions confirmées dans la documentation officielle (section 4).
 
 ### 3.3 Recherche unifiée
 
@@ -131,12 +131,38 @@ Pour les 9 976 conditionnements commercialisés en officine :
 
 La recherche unifiée peut donc s'appuyer **entièrement sur SAM v2** pour l'identification, la disponibilité, le prix, le remboursement et les liens. Le CBIP sert pour le contenu clinique, via son lien direct ou sa base de données mensuelle.
 
-## 4. Points à confirmer
+## 4. Points vérifiés dans la documentation officielle (20/10/2026)
 
-1. Signification exacte de `regimeType` 1 et 2 (BIM ou ordinaire) et de `Cheap` / `Cheapest`, dans la [documentation SAM](https://www.samportal.be/fr/sam/documentation) (XSD 6.0.2).
-2. Codes de circuit `A` et `R` de `deliveryEnvironment`.
-3. **Exhaustivité des ruptures** : comparer les 684 ruptures de SAM avec l'affichage de PharmaStatus.
-4. 7 chemins légaux du Chapitre IV sans paragraphe correspondant (1 199 reliés sur 1 206).
+Sources : [documentation du portail SAM](https://www.samportal.be/fr/sam/documentation), en particulier « SAM v2 – PIM 5.1.1 », le schéma XSD 6.0.2 et le « Conceptual Data Dossier 2.4 ».
+
+| Point | Résultat | Source |
+|---|---|---|
+| `regimeType` du ticket modérateur | ✅ **1 = régime préférentiel (BIM)**, **2 = régime actif (ordinaire)**. En officine, il y a deux tickets (régimes 1 et 2). À l'hôpital, il n'y a pas de ticket modérateur | PIM 5.1.1, entité *Copayment* |
+| `Cheap` | ✅ « Ce produit est considéré par l'INAMI comme **bon marché** » | PIM 5.1.1 et XSD (`DmppReimbursementFields`) |
+| `Cheapest` | ✅ « Ce produit est considéré par l'INAMI comme **le moins cher du marché** » | PIM 5.1.1 et XSD |
+| Circuits `deliveryEnvironment` | ✅ `P` officine publique, `A` ambulatoire, `H` hôpital, `R` maison de repos et de soins | XSD `SamCommonItems.xsd` |
+
+La documentation ne relie pas explicitement `Cheap` au quota de 60 % de prescriptions bon marché. Il s'agit toutefois de la même qualification INAMI.
+
+### Exhaustivité des ruptures : comparaison avec PharmaStatus
+
+Méthode : récupération de toutes les notifications via l'API publique utilisée par l'application [pharmastatut.be](https://pharmastatut.be/) (`/api/packs/info/public` ; 8 147 lignes, 8 002 conditionnements). Ont été retenues les notifications « indisponible » ou « disponibilité limitée » traitées par l'AFMPS et en cours au 20/10/2026. Elles ont ensuite été comparées aux 684 ruptures de l'export SAM.
+
+| | Nombre |
+|---|---|
+| Ruptures actives dans PharmaStatus | 795 |
+| Ruptures dans SAM | 684 |
+| **Communes aux deux** | **680**, avec une date de début identique dans 100 % des cas |
+| Seulement dans PharmaStatus | 115, dont **113 médicaments vétérinaires** et 2 médicaments humains déclarés le 19/10 |
+| Seulement dans SAM | 4 : 2 redevenus disponibles le 20/10 après la génération de l'export, et 2 notifications en cours de modification dans PharmaStatus |
+
+**Conclusion : pour les médicaments à usage humain, SAM v2 reprend les ruptures de PharmaStatus**, avec un décalage de quelques heures à environ un jour. Les médicaments vétérinaires ne figurent pas dans les ruptures SAM.
+
+Pour un affichage en temps réel, on peut compléter par l'API publique de PharmaStatut, en interrogeant un conditionnement précis (`searchSTR={"packId":…}`) au moment de l'affichage. Cette API **n'est pas documentée** : elle peut changer sans préavis et doit être utilisée avec parcimonie.
+
+### Reste à éclaircir
+
+- 7 chemins légaux du Chapitre IV sans paragraphe correspondant (1 199 reliés sur 1 206).
 
 ## 5. Utilisation
 
@@ -170,7 +196,6 @@ ORDER BY d.price;
 
 ## 6. Prochaines étapes
 
-1. Confirmer les points de la section 4.
-2. Prototype local : recherche par nom ou CNK → fiche unifiée (disponibilité, alternatives, prix, ticket BIM et ordinaire, liens RCP, notice et CBIP).
-3. Ajouter la base de données du CBIP (contenu clinique) et les médicaments importés (`IMPP`).
-4. Mise à jour automatique quotidienne de l'export SAM.
+1. Prototype local : recherche par nom ou CNK → fiche unifiée (disponibilité, alternatives, prix, ticket BIM et ordinaire, liens RCP, notice et CBIP).
+2. Ajouter la base de données du CBIP (contenu clinique) et les médicaments importés (`IMPP`).
+3. Mise à jour automatique quotidienne de l'export SAM.
