@@ -38,7 +38,7 @@ Le serveur sert une page unique (`app/static_template.html`) dans laquelle les d
 ### Version autonome (un seul fichier HTML, sans serveur)
 
 ```bash
-python -m app.export_static   # crée data/medicaments.html (≈ 5 Mo), à ouvrir dans un navigateur
+python -m app.export_static   # crée data/medicaments.html (≈ 9 Mo), à ouvrir dans un navigateur
 ```
 
 C'est exactement la même page que celle du serveur, enregistrée dans un fichier.
