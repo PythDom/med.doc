@@ -43,6 +43,28 @@ python -m app.export_static   # crée data/medicaments.html (≈ 9 Mo), à ouvri
 
 C'est exactement la même page que celle du serveur, enregistrée dans un fichier.
 
+### Application Android (APK de test)
+
+La page autonome peut être emballée dans une application Android (Android 5 ou plus récent), qui fonctionne
+sans connexion. Les liens vers le CBIP, le RCP ou la notice s'ouvrent dans le navigateur du téléphone.
+
+```bash
+python -m app.export_static                 # crée data/medicaments.html
+python android/build_apk.py                 # crée data/officine-sam.apk
+```
+
+Aucun SDK Android n'est nécessaire : il faut Java (JDK 11 ou plus récent) et un accès à Maven Central, d'où le script
+télécharge au premier lancement les classes Android (`org.robolectric:android-all`, 131 Mo) et l'outil `dx`.
+Le manifeste binaire est écrit par le script ; l'APK est signée en v1 avec une clé de test créée dans
+`data/android-test.keystore` (à garder pour pouvoir installer les mises à jour par-dessus).
+
+**Installation** : copiez l'APK sur le téléphone et ouvrez-la ; Android demande d'autoriser l'installation
+d'applications de cette source. Play Protect peut avertir d'une application inconnue : choisissez « Installer quand même ».
+
+**Limites** : application de test, non publiée sur le Play Store. Elle cible Android 10 (`targetSdkVersion 29`)
+parce que la signature v2, exigée à partir de la cible 30, nécessite l'outil `apksigner` du SDK Android.
+Les données sont celles de l'export SAM et du CBIP au moment de la construction : reconstruisez l'APK pour les mettre à jour.
+
 ### Tableau de bord des prescriptions (export Medispring)
 
 Indicateurs de prescription calculés sur votre propre activité, à partir d'un export de votre logiciel médical :
