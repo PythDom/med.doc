@@ -38,6 +38,7 @@ header.top { background: var(--surface); border-bottom: 1px solid var(--line); p
 .top-inner { max-width: 1240px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 .brand { display: flex; align-items: center; gap: 8px; font: 600 19px/1 var(--display); letter-spacing: .01em; }
 .cross { width: 22px; height: 22px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border-radius: 4px; font: 700 16px/1 var(--body); }
+.dash-link { font-weight: 600; font-size: 14px; text-decoration: none; }
 .searchbox { flex: 1 1 320px; display: flex; gap: 8px; min-width: 0; }
 .searchbox input[type=search] { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: 15px var(--body); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -101,12 +102,21 @@ tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .picks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .chip.pick { background: var(--accent); color: var(--accent-ink); white-space: normal; border-radius: 6px; line-height: 1.35; padding-block: 3px; }
 .per { color: var(--muted); font-size: 12px; }
+.cbip .crumbs { margin: -4px 0 12px; color: var(--muted); font-size: 13px; }
+.cbip h3 { margin: 12px 0 4px; font: 600 14px var(--body); }
+.cbip details { border-top: 1px solid var(--line); padding-block: 8px; }
+.cbip summary { cursor: pointer; font-weight: 600; }
+.md { max-width: 72ch; font-size: 14px; }
+.md h4 { margin: 14px 0 4px; font: 600 14px var(--display); letter-spacing: .02em; color: var(--accent); }
+.md ul { margin: 4px 0; padding-left: 20px; } .md li { margin: 2px 0; } .md p { margin: 6px 0; }
+.md.note { background: var(--warn-bg); border-radius: 6px; padding: 8px 12px; }
 .linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 500; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: no-preference) { .results li button, .seg button { transition: background-color .12s; } }
 </style>
 
 <header class="top"><div class="top-inner gutter">
   <div class="brand"><span class="cross" aria-hidden="true">+</span>Officine SAM</div>
+  <a class="dash-link" id="dash-link" href="/tableau-de-bord" hidden>Tableau de bord</a>
   <form class="searchbox" id="search-form" role="search">
     <input type="search" id="q" placeholder="Nom, substance ou CNK…" aria-label="Rechercher un médicament" autocomplete="off">
   </form>
@@ -141,8 +151,15 @@ const products = DATA.products.map(p => ({
   cnk: p[0], name: p[1], cti: p[2], price: p[3], flags: p[4], atc: p[5], atcDesc: t(p[6]), delivery: t(p[7]),
   company: t(p[8]), group: p[9], groupName: t(p[10]), vtm: p[11], substance: t(p[12]), endComm: t(p[13]),
   links: p[14].map((l, i) => (l ? { name: LINK_NAMES[i], url: PFX[l[0]] + l[1] } : null)).filter(Boolean),
-  qty: p[15], unit: p[16], subst: p[17], substUnit: p[18],
+  qty: p[15], unit: p[16], subst: p[17], substUnit: p[18], skey: p[19],
 }));
+const imported = (DATA.imported || []).map(i => ({ name: i[0], country: i[1], strength: i[2], pack: i[3], cnk: i[4],
+  form: i[5], route: i[6], notes: i[7], start: i[8], key: i[9] }));
+const importedByKey = new Map();
+imported.forEach(i => { if (!importedByKey.has(i.key)) importedByKey.set(i.key, []); importedByKey.get(i.key).push(i); });
+let regionNames = null;
+try { regionNames = new Intl.DisplayNames(["fr"], { type: "region" }); } catch (e) {}
+const countryName = code => { if (!code || code === "XX") return "non précisé"; try { return regionNames ? regionNames.of(code) : code; } catch (e) { return code; } };
 products.forEach(p => { p.key = norm(p.name + " " + (p.substance || "")); p.supply = DATA.supply[p.cti] || null; });
 const byCnk = new Map(products.map(p => [p.cnk, p]));
 const has = (p, f) => (p.flags & f) !== 0;
@@ -265,7 +282,7 @@ function alternativeLevels(p) {
   const levels = [];
   if (p.group) {
     const rows = candidates(byGroup.get(p.group), () => true);
-    levels.push({ title: "Substituable", why: "Même substance, même dosage, même forme.", metric: "unit",
+    levels.push({ title: "Substituable", why: "Même substance, même dosage, même voie d'administration. La forme peut différer (comprimé, gélule, sachet…) : à vérifier.", metric: "unit",
       ...withHighlights(rows, [[closestQuantity(p, rows, patientPays), "Quantité la plus proche, la moins chère pour le patient"],
                                [cheapestBy(rows, x => perUnit(x, patientPays)), "La moins chère par unité pour le patient"]], 25) });
   }
@@ -276,12 +293,61 @@ function alternativeLevels(p) {
       ...withHighlights(rows, [[cheapestBy(comparable, x => perSubstance(x, patientPays)),
         unit === "mg" ? "La moins chère par gramme de substance pour le patient" : "La moins chère par unité de substance pour le patient"]], 25) });
   }
+  const unavailable = p.supply || !has(p, F.marketed);
+  if (unavailable && p.skey && importedByKey.has(p.skey)) {
+    levels.push({ kind: "imported", title: "Médicament importé", why: "Médicament étranger autorisé temporairement pour pallier une indisponibilité, même substance active. À demander au pharmacien : prix et remboursement ne figurent pas dans SAM.",
+      rows: importedByKey.get(p.skey), tags: new Map() });
+  }
   if (p.atc && p.atc.length >= 5) {
     const rows = candidates(byAtc5.get(p.atc.slice(0, 5)), x => x.vtm !== p.vtm);
     levels.push({ title: `Même classe ATC (${p.atc.slice(0, 5)})`, why: "Autre molécule : décision thérapeutique.", metric: null,
       ...withHighlights(rows, [], 25) });
   }
   return levels;
+}
+
+/** Rendu Markdown minimal et sûr des textes du CBIP : titres, listes, gras, italique, liens http(s). */
+function markdown(src) {
+  const inline = line => {
+    const links = [];
+    let out = esc(line).replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (m, label, url) => {
+      links.push(`<a href="${url}" target="_blank" rel="noopener">${label}</a>`);
+      return `\u0000${links.length - 1}\u0000`;
+    });
+    out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])_([^_]+?)_(?=[\s.,;:)]|$)/g, "$1<em>$2</em>");
+    return out.replace(/\u0000(\d+)\u0000/g, (m, i) => links[+i]);
+  };
+  const html = []; let list = false;
+  for (const raw of src.split(/\r?\n/)) {
+    const line = raw.trim();
+    const heading = /^\*\*_(.+?)_\*\*$/.exec(line);
+    const item = /^[-*]\s+(.*)$/.exec(line);
+    if (item) { if (!list) { html.push("<ul>"); list = true; } html.push(`<li>${inline(item[1])}</li>`); continue; }
+    if (list && line) { html.push("</ul>"); list = false; }
+    if (heading) html.push(`<h4>${inline(heading[1])}</h4>`);
+    else if (line) html.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) html.push("</ul>");
+  return html.join("");
+}
+
+/** Section du Répertoire commenté : chemin des chapitres, posologie, textes des chapitres (le plus précis d'abord). */
+function cbipSection(p) {
+  const C = DATA.cbip || {}, entry = (C.products || {})[p.cnk];
+  if (!entry) return "";
+  const [code, productPos, productNote] = entry, chapters = C.chapters || {};
+  const path = [];
+  for (let i = 1; i <= code.length; i++) if (chapters[code.slice(0, i)]) path.push([code.slice(0, i), chapters[code.slice(0, i)]]);
+  const posology = t(productPos) || [...path].reverse().map(([, ch]) => t(ch[2])).find(Boolean);
+  const texts = [...path].reverse().filter(([, ch]) => t(ch[1]));
+  const crumbs = path.filter(([, ch]) => ch[0] && !/^Spécialités/.test(ch[0])).map(([, ch]) => esc(ch[0])).join(" › ");
+  const link = p.links.find(l => l.name === "Fiche CBIP");
+  return `<section class="panel card cbip"><h2>Répertoire commenté (CBIP)</h2>
+    <p class="crumbs">${crumbs}</p>
+    ${t(productNote) ? `<div class="md note">${markdown(t(productNote))}</div>` : ""}
+    ${posology ? `<h3>Posologie</h3><div class="md">${markdown(posology)}</div>` : ""}
+    ${texts.map(([c, ch], i) => `<details${i === 0 ? " open" : ""}><summary>${esc(ch[0])}</summary><div class="md">${markdown(t(ch[1]))}</div></details>`).join("")}
+    <p class="hint">Source : Répertoire commenté des médicaments, CBIP, version ${esc(DATA.meta.cbip_version || "")}.${link ? ` <a href="${esc(link.url)}" target="_blank" rel="noopener">Ouvrir sur cbip.be ↗</a>` : ""}</p></section>`;
 }
 
 const qtyLabel = x => (x.qty == null ? "—" : `${x.qty.toLocaleString("fr-BE", { maximumFractionDigits: 1 })}${x.unit ? " " + x.unit : ""}`);
@@ -320,6 +386,11 @@ function renderDetail(p) {
     : `<p>Non remboursé : le patient paie le prix public, soit <strong class="num">${euro(p.price)}</strong>.</p>`;
 
   const levels = alternativeLevels(p).map(level => {
+    if (level.kind === "imported") return `<div class="level"><h3>${esc(level.title)}</h3><p class="why">${esc(level.why)}</p>
+      <div class="wrap"><table><thead><tr><th>Produit importé</th><th>Pays</th><th>Dosage</th><th>Contenu</th><th>Forme · voie</th><th>CNK</th><th>Depuis</th></tr></thead><tbody>
+      ${level.rows.map(i => `<tr><td>${esc(i.name)}${i.notes ? `<div class="hint">${esc(i.notes)}</div>` : ""}</td><td>${esc(countryName(i.country))}</td>
+        <td>${esc(i.strength || "—")}</td><td>${esc(i.pack || "—")}</td><td>${esc([i.form, i.route].filter(Boolean).join(" · ") || "—")}</td>
+        <td class="cnk">${esc(i.cnk || "—")}</td><td class="num">${date(i.start)}</td></tr>`).join("")}</tbody></table></div></div>`;
     const metricHead = level.metric === "unit" ? "Patient / unité" : level.metric === "substance" ? (level.substUnit === "mg" ? "Patient / g de substance" : "Patient / unité de substance") : null;
     const rows = level.rows.map(x => {
       const tags = level.tags.get(x) || [];
@@ -335,6 +406,10 @@ function renderDetail(p) {
       : '<p class="hint">Aucun conditionnement disponible à ce niveau.</p>'}</div>`;
   }).join("");
 
+  const unavailable = p.supply || !has(p, F.marketed);
+  const alternativesHtml = `<section class="panel card"><h2>Alternatives disponibles</h2>
+      <p class="hint lead">Classées selon ce que paie le patient ${label} : ticket modérateur et supplément si le produit est remboursé, prix public sinon.</p>${levels || '<p class="hint">Pas de groupe ni de classe ATC connus pour ce produit.</p>'}
+      <p class="hint">Seuls les conditionnements commercialisés, autorisés et sans rupture en cours sont proposés. Toute substitution reste une décision clinique.</p></section>`;
   document.getElementById("detail").innerHTML = `${alert}
     <article class="panel card"><h1>${esc(p.name)}</h1>
       <div class="subline"><span>CNK <span class="cnk">${p.cnk}</span></span>${p.substance ? `<span>${esc(p.substance)}</span>` : ""}
@@ -346,9 +421,7 @@ function renderDetail(p) {
       <div class="links">${p.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join("") || '<span class="hint">Aucun lien officiel</span>'}</div>
     </article>
     <section class="panel card"><h2>Remboursement et coût pour le patient</h2>${cost}</section>
-    <section class="panel card"><h2>Alternatives disponibles</h2>
-      <p class="hint lead">Classées selon ce que paie le patient ${label} : ticket modérateur et supplément si le produit est remboursé, prix public sinon.</p>${levels || '<p class="hint">Pas de groupe ni de classe ATC connus pour ce produit.</p>'}
-      <p class="hint">Seuls les conditionnements commercialisés, autorisés et sans rupture en cours sont proposés. Toute substitution reste une décision clinique.</p></section>`;
+    ${unavailable ? alternativesHtml + cbipSection(p) : cbipSection(p) + alternativesHtml}`;
   document.querySelectorAll("#results button[data-cnk]").forEach(b => b.setAttribute("aria-current", String(b.dataset.cnk === p.cnk)));
 }
 
@@ -378,8 +451,10 @@ document.addEventListener("click", e => { const b = e.target.closest("button[dat
 
 const m = DATA.meta, shortages = Object.keys(DATA.supply).length;
 document.getElementById("notice").textContent =
-  `Export SAM v2 ${m.export || ""} du ${date(m.reference_date)} · ${products.length.toLocaleString("fr-BE")} conditionnements en officine · ${shortages} ruptures en cours. Version de démonstration : aide à la recherche, pas à la décision.`;
+  `Export SAM v2 ${m.export || ""} du ${date(m.reference_date)}${m.cbip_version ? ` · CBIP ${m.cbip_version}` : ""} · ${products.length.toLocaleString("fr-BE")} conditionnements en officine · ${shortages} ruptures en cours. Version de démonstration : aide à la recherche, pas à la décision.`;
 
+// Le tableau de bord n'existe que sur le prototype local (python -m app.server).
+if (["localhost", "127.0.0.1"].includes(location.hostname)) document.getElementById("dash-link").hidden = false;
 const fromHash = /^#p(\d{7})$/.exec(location.hash);
 document.getElementById("q").value = "gabapentine 400";
 setRegime(regime);

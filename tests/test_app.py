@@ -1,8 +1,9 @@
 """Tests du chargeur SAM v2, de l'export de la page et du serveur local, sur un mini-export synthétique."""
 import http.client
+import http.server
+import io
 import shutil
 import subprocess
-import http.server
 import json
 import pathlib
 import re
@@ -10,9 +11,11 @@ import sqlite3
 import tempfile
 import threading
 import unittest
+import zipfile
 
 from app import export_static, server
 from app import queries as q
+from cbip import load as cbip_load
 from sam_v2 import load
 
 NS = 'xmlns="urn:x"'
@@ -82,6 +85,32 @@ RMB_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
   </ReimbursementContext>
 </ExportReimbursements>"""
 
+IMPP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
+<ExportImportedMedicines {NS}>
+  <ImportedMedicinalProductPackage Id="imp1"><Data from="2026-01-01"><Name>Gabapentin Pfizer</Name><Country>DE</Country>
+    <Strength>400 mg</Strength><PackSize>100 capsules</PackSize><CNK>4900001</CNK>
+    <ActiveSubstance code="1"><Name><Fr>Gabapentine</Fr></Name></ActiveSubstance></Data></ImportedMedicinalProductPackage>
+  <ImportedMedicinalProductPackage Id="imp2"><Data from="2020-01-01" to="2021-01-01"><Name>Ancien</Name><Country>NL</Country>
+    <ActiveSubstance code="1"><Name><Fr>Gabapentine</Fr></Name></ActiveSubstance></Data></ImportedMedicinalProductPackage>
+</ExportImportedMedicines>"""
+
+
+def cbip_archive():
+    """Mini-archive CSV du CBIP : un chapitre parent avec texte, un groupe de spécialités avec posologie."""
+    files = {
+        "Hyr.csv": '"HyrCV";"HYR";"MPGRP";"TI";"INTRO";"POS"\n'
+                   '"1";"J";false;"Système nerveux";"";""\n'
+                   '"2";"JG";false;"Gabapentine";"**_Positionnement_**\n- Voir [10.7](http://www.cbip.be/fr/contents/8706).";""\n'
+                   '"3";"JGA";true;"Spécialités [Gabapentine]";"";"300 mg 3x/jour"\n',
+        "MPP.csv": '"mppcv";"hyr_";"pos";"note"\n"1000002";"JGA";"";""\n',
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as z:
+        for name, content in files.items():
+            z.writestr(name, content)
+    return buffer.getvalue()
+
+
 CHAPTERIV_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
 <ExportChapterIV {NS}>
   <Paragraph ChapterName="IV" ParagraphName="1640000"><Data from="2020-01-01">
@@ -96,10 +125,12 @@ class AppTest(unittest.TestCase):
         root = pathlib.Path(cls.tmp.name)
         xml_dir = root / "sam-test"
         xml_dir.mkdir()
-        for name, content in [("AMP", AMP_XML), ("VMP", VMP_XML), ("RMB", RMB_XML), ("CHAPTERIV", CHAPTERIV_XML)]:
+        for name, content in [("AMP", AMP_XML), ("VMP", VMP_XML), ("RMB", RMB_XML), ("CHAPTERIV", CHAPTERIV_XML),
+                              ("IMPP", IMPP_XML)]:
             (xml_dir / f"{name}-1.xml").write_text(content, encoding="utf-8")
         cls.db_path = root / "sam.sqlite"
         load.load(xml_dir, cls.db_path, "2026-10-20")
+        cbip_load.load_archive(cbip_archive(), cls.db_path, "2609A")
         cls.db = q.connect(cls.db_path)
 
     @classmethod
@@ -124,6 +155,22 @@ class AppTest(unittest.TestCase):
         self.assertEqual(q.split_legal_path("RD20180201-IV-1640000"), ("IV", "1640000"))
         self.assertEqual(q.split_legal_path(None), ("", ""))
 
+    def test_imported_medicines(self):
+        data = export_static.build(self.db_path)
+        products = {p[0]: p for p in data["products"]}
+        self.assertEqual(products["1000001"][19], "1")  # clé de substances de la gabapentine
+        self.assertEqual([(i[0], i[1], i[4], i[9]) for i in data["imported"]], [("Gabapentin Pfizer", "DE", "4900001", "1")])
+
+    def test_cbip_content(self):
+        data = export_static.build(self.db_path)
+        self.assertEqual(data["meta"]["cbip_version"], "2609A")
+        code, posology, note = data["cbip"]["products"]["1000002"]
+        self.assertEqual(code, "JGA")
+        chapters, text = data["cbip"]["chapters"], data["text"]
+        self.assertEqual(set(chapters), {"J", "JG", "JGA"})
+        self.assertIn("**_Positionnement_**", text[chapters["JG"][1]])
+        self.assertEqual(text[chapters["JGA"][2]], "300 mg 3x/jour")
+
     def test_export_data(self):
         data = export_static.build(self.db_path)
         products = {p[0]: p for p in data["products"]}
@@ -143,8 +190,8 @@ class AppTest(unittest.TestCase):
                          [(400.0, "mg", 1.0, "1")])
         raw.close()
         products = {p[0]: p for p in export_static.build(self.db_path)["products"]}
-        self.assertEqual(products["1000001"][15:], [90.0, "", 36000.0, "mg"])
-        self.assertEqual(products["1000002"][15:], [200.0, "", 80000.0, "mg"])
+        self.assertEqual(products["1000001"][15:19], [90.0, "", 36000.0, "mg"])
+        self.assertEqual(products["1000002"][15:19], [200.0, "", 80000.0, "mg"])
         self.assertEqual(export_static.parse_pack("5 x 1 ml + 5 x Injection needle"), (5.0, "ml"))
         self.assertEqual(export_static.parse_pack("1 l"), (1000.0, "ml"))
         self.assertEqual(export_static.parse_pack("Kit"), (None, None))
@@ -205,6 +252,10 @@ console.log(JSON.stringify({
             response, _ = get("/produit/1000001")
             self.assertEqual((response.status, response.getheader("Location")), (302, "/#p1000001"))
             self.assertEqual(get("/inconnu")[0].status, 404)
+            self.assertEqual(get("/tableau-de-bord")[0].status, 404)  # pas encore construit
+            self.db_path.with_name("tableau-de-bord.html").write_text("<p>tableau</p>", encoding="utf-8")
+            response, body = get("/tableau-de-bord")
+            self.assertEqual((response.status, body), (200, "<p>tableau</p>"))
         finally:
             httpd.shutdown()
             httpd.server_close()

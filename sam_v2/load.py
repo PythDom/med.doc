@@ -30,8 +30,11 @@ CREATE TABLE reimbursement (cnk TEXT, delivery_environment TEXT, legal_reference
 CREATE TABLE copayment (cnk TEXT, delivery_environment TEXT, legal_reference_path TEXT,
     regime_type TEXT, fee REAL);
 CREATE TABLE vmp (vmp_code TEXT PRIMARY KEY, name TEXT, vmp_group_code TEXT, vtm_code TEXT);
-CREATE TABLE vmp_ingredient (vmp_code TEXT, substance TEXT, amount REAL, unit TEXT,
+CREATE TABLE vmp_ingredient (vmp_code TEXT, substance_code TEXT, substance TEXT, amount REAL, unit TEXT,
     denominator REAL, denominator_unit TEXT);
+CREATE TABLE imported (imported_id TEXT PRIMARY KEY, name TEXT, country TEXT, strength TEXT, pack_size TEXT,
+    cnk TEXT, form TEXT, route TEXT, notes TEXT, start_date TEXT);
+CREATE TABLE imported_substance (imported_id TEXT, substance_code TEXT, substance TEXT);
 CREATE TABLE vmp_group (vmp_group_code TEXT PRIMARY KEY, name TEXT, no_switch_reason TEXT,
     no_generic_prescription_reason TEXT);
 CREATE TABLE vtm (vtm_code TEXT PRIMARY KEY, name TEXT);
@@ -194,8 +197,9 @@ def load_vmp(db, xml_dir, today):
                         continue
                     numerator, denominator = child(strength, "NumeratorRange"), child(strength, "Denominator")
                     low, high = num(text(numerator, "Min")), num(text(numerator, "Max"))
-                    db.execute("INSERT INTO vmp_ingredient VALUES (?,?,?,?,?,?)", (
-                        el.get("code"), text(idata, "Substance", "Name"), low if low == high else None,
+                    db.execute("INSERT INTO vmp_ingredient VALUES (?,?,?,?,?,?,?)", (
+                        el.get("code"), attr(idata, "Substance"), text(idata, "Substance", "Name"),
+                        low if low == high else None,
                         numerator.get("unit"), num(denominator.text if denominator is not None else None),
                         denominator.get("unit") if denominator is not None else None))
         elif name == "VmpGroup":
@@ -204,6 +208,22 @@ def load_vmp(db, xml_dir, today):
                 attr(d, "NoGenericPrescriptionReason")))
         else:
             db.execute("INSERT INTO vtm VALUES (?,?)", (el.get("code"), text(d, "Name")))
+
+
+def load_imported(db, xml_dir, today):
+    """Médicaments importés autorisés temporairement (rupture), reliés aux produits belges par leurs substances."""
+    for _, el in iter_entities(find(xml_dir, "IMPP"), {"ImportedMedicinalProductPackage"}):
+        d = current(el, today)
+        if d is None:
+            continue
+        key = el.get("Id")
+        db.execute("INSERT OR REPLACE INTO imported VALUES (?,?,?,?,?,?,?,?,?,?)", (
+            key, text(d, "Name"), text(d, "Country"), text(d, "Strength"), text(d, "PackSize"), text(d, "CNK"),
+            text(d, "PharmaceuticalFormCode", "Name"), text(d, "RouteOfAdministrationCode", "Name"),
+            text(d, "Notes"), d.get("from")))
+        for substance in children(d, "ActiveSubstance"):
+            db.execute("INSERT INTO imported_substance VALUES (?,?,?)",
+                       (key, substance.get("code"), text(substance, "Name")))
 
 
 def load_chapter_iv(db, xml_dir, today):
@@ -219,7 +239,7 @@ def load(xml_dir: pathlib.Path, db_path: pathlib.Path, today: str):
     db_path.unlink(missing_ok=True)
     db = sqlite3.connect(db_path)
     db.executescript(SCHEMA)
-    for step in (load_vmp, load_rmb, load_chapter_iv, load_amp):
+    for step in (load_vmp, load_rmb, load_chapter_iv, load_imported, load_amp):
         print(f"{step.__name__}…", flush=True)
         step(db, xml_dir, today)
         db.commit()
